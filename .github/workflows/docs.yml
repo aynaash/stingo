@@ -33,7 +33,10 @@ jobs:
         env:
           BASE: /${{ github.event.repository.name }}
 
+      # enablement lets a fresh fork publish without anyone visiting Settings
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/.dist

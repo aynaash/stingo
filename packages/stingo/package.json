@@ -1,33 +1,39 @@
 {
   "name": "stingo",
   "version": "0.1.0",
-  "description": "Declarative video for people who ship content \u2014 SVG animations and MP4 from a typed script, with cuts that land on the beat.",
+  "description": "Let your AI make the video. Declarative video for engineers: a script plus a taste profile render to MP4, with cuts that land on the beat and talking-head takes composited in.",
   "type": "module",
   "license": "AGPL-3.0-only",
   "keywords": [
     "video",
-    "animation",
-    "svg",
-    "mp4",
+    "video-generation",
     "motion-graphics",
+    "mcp",
+    "mcp-server",
+    "ai",
+    "agent",
     "ffmpeg",
     "satori",
-    "bun",
+    "svg",
+    "mp4",
     "shorts",
-    "explainer"
+    "youtube",
+    "explainer",
+    "declarative",
+    "content-creation",
+    "bun",
+    "typescript"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/types/stingo/src/index.d.ts",
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
       "types": "./dist/types/stingo/src/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./media": {
-      "bun": "./src/media.ts",
       "types": "./dist/types/media/src/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
@@ -35,12 +41,13 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "stingo": "./bin/stingo.ts"
+    "stingo": "./bin/stingo.ts",
+    "stingo-mcp": "./bin/stingo-mcp.ts"
   },
   "files": [
     "dist",
-    "src",
     "bin",
+    "assets",
     "README.md",
     "LICENSE"
   ],
@@ -48,19 +55,29 @@
     "bun": ">=1.2"
   },
   "dependencies": {
-    "@stingo/schema": "workspace:*",
-    "@stingo/core": "workspace:*",
-    "@stingo/render": "workspace:*",
-    "@stingo/blocks": "workspace:*",
-    "@stingo/themes": "workspace:*",
-    "@stingo/film": "workspace:*",
-    "@stingo/audio": "workspace:*",
-    "@stingo/encode": "workspace:*",
-    "@stingo/cli": "workspace:*",
-    "@stingo/studio": "workspace:*",
-    "@stingo/media": "workspace:*"
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "d3-scale": "^4.0.2",
+    "d3-shape": "^3.2.0",
+    "satori": "^0.33.4",
+    "shiki": "^4.4.3",
+    "yaml": "^2.9.0",
+    "zod": "^4.6.2"
   },
   "scripts": {
     "prepublishOnly": "cd ../.. && bun run tools/build.ts"
+  },
+  "homepage": "https://aynaash.github.io/stingo/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aynaash/stingo.git",
+    "directory": "packages/stingo"
+  },
+  "bugs": {
+    "url": "https://github.com/aynaash/stingo/issues"
+  },
+  "author": "Hersi (https://github.com/aynaash)",
+  "publishConfig": {
+    "access": "public"
   }
 }

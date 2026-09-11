@@ -35,3 +35,9 @@ docs/.dist/
 .DS_Store
 Thumbs.db
 *.swp
+
+# build output of the publishable package
+packages/stingo/dist/
+packages/stingo/assets/
+packages/stingo/README.md
+*.tgz

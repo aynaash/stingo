@@ -1,5 +1,8 @@
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
+import { existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { loadFonts, resolveFamily, type LoadedFont } from './fonts';
 import type { El } from './h';
 
@@ -9,11 +12,40 @@ export interface RendererOpts { width: number; height: number; fontDir?: string;
  *  (b-roll glyphs). Satori-produced text is already glyph paths and needs none. */
 export interface ResvgFontCfg { loadSystemFonts: boolean; fontFiles?: string[]; defaultFontFamily?: string }
 
+/** Where the fonts live.
+ *
+ *  This used to be the bare relative string 'assets/fonts', which resolves
+ *  against the *working directory* — fine inside this repository and broken
+ *  everywhere else, because an installed package has no idea what directory
+ *  someone happens to be standing in.
+ *
+ *  Fonts ship with the package, so resolve them relative to this module first
+ *  and fall back to the repository layout. STINGO_FONTS overrides everything,
+ *  which is also how you use your own typefaces without forking. */
+export function defaultFontDir(): string {
+  const env = process.env.STINGO_FONTS;
+  if (env) return resolve(env);
+
+  const here = dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    resolve(here, '../assets/fonts'),         // bundled: <pkg>/dist/index.js
+    resolve(here, '../../assets/fonts'),      // published source layout
+    resolve(here, '../../../assets/fonts'),   // repo: packages/render/src
+    resolve(here, '../../../../assets/fonts'),
+    resolve('assets/fonts'),                  // the working directory, as before
+  ];
+  for (const c of candidates) if (existsSync(c)) return c;
+  throw new Error(
+    'no font directory found. stingo ships fonts with the package; set STINGO_FONTS '
+    + `to a directory of .ttf/.otf files, or pass fontDir. Looked in:\n  ${candidates.join('\n  ')}`,
+  );
+}
+
 export class Renderer {
   private constructor(readonly width: number, readonly height: number, readonly fonts: LoadedFont[], private fontCfg: ResvgFontCfg) {}
 
   static async create(opts: RendererOpts): Promise<Renderer> {
-    const dir = opts.fontDir ?? 'assets/fonts';
+    const dir = opts.fontDir ?? defaultFontDir();
     const fonts = opts.fonts ?? (await loadFonts(dir));
     const { readdir } = await import('node:fs/promises');
     const { join, resolve } = await import('node:path');

@@ -6,42 +6,20 @@ few lines rather than a narrative.
 
 This is the path when that happens.
 
-## Before publishing: one thing is missing
+## A trap worth knowing about
 
-**The `stingo` package does not ship the MCP server.** Its `bin` has only
-`stingo`, and `@stingo/mcp` is not among its dependencies. Publishing as-is
-would put the CLI on npm but leave `bunx stingo-mcp` — the one command that
-matters for the "connect an AI" path — not working.
+**npm silently drops bin entries whose value starts with `./`.** Not an error —
+a warning in the publish log, and then the command does not exist for anyone who
+installs the package:
 
-Fix before the first publish, in `packages/stingo/package.json`:
-
-```jsonc
-"bin": {
-  "stingo": "./bin/stingo.ts",
-  "stingo-mcp": "./bin/stingo-mcp.ts"     // add
-},
-"dependencies": {
-  "@modelcontextprotocol/sdk": "^1.30.0", // add — the MCP server needs it
-  // ...
-}
+```
+npm warn publish "bin[stingo]" script name bin/stingo.ts was invalid and removed
 ```
 
-with `packages/stingo/bin/stingo-mcp.ts`:
-
-```ts
-#!/usr/bin/env bun
-import { main } from '@stingo/mcp';
-await main();
-```
-
-and `@stingo/mcp` either listed as a dependency or bundled by `tools/build.ts`
-the way the other packages are.
-
-**Also check the workspace dependencies.** `packages/stingo/package.json` lists
-eleven `@stingo/*` packages as `workspace:*`. None of them are published. Either
-`tools/build.ts` bundles them all into `dist/` and they come out of
-`dependencies` entirely, or all eleven get published alongside. Verify with a
-packed tarball before pushing anything to the registry — see below.
+`bun add <tarball>` does not reproduce it, because bun does not apply npm's
+manifest rewriting. So the only way to catch it is to install the packed tarball
+**with npm** and look in `node_modules/.bin`. `test/package.test.ts` now asserts
+the shape of the manifest, but check the log anyway.
 
 ## Checks
 

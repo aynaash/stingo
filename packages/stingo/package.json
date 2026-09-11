@@ -41,8 +41,8 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "stingo": "./bin/stingo.ts",
-    "stingo-mcp": "./bin/stingo-mcp.ts"
+    "stingo": "bin/stingo.ts",
+    "stingo-mcp": "bin/stingo-mcp.ts"
   },
   "files": [
     "dist",

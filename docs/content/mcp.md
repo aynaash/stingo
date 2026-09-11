@@ -1,6 +1,11 @@
-stingo ships an MCP server, so an agent can write a script, **render a frame,
-and look at it**. That last part is the point. A model writing video without
-ever seeing one produces scripts that validate and read badly.
+The fastest way to make a video with stingo is to not write one. Connect an
+agent, describe what you want, and let it write the script — then **render a
+frame and look at it**.
+
+That last part is the whole reason this works. A model writing video it never
+sees produces scripts that validate and read badly: a headline that wrapped, a
+chart bar invisible against its background, a scene over before anyone could
+read it. `stingo_still` returns the PNG itself, so the model can check.
 
 ## Connect it
 
@@ -32,6 +37,11 @@ From anywhere else, point at the installed binary:
 ```
 
 It speaks MCP over stdio. ffmpeg still has to be on the `PATH`.
+
+[`AGENTS.md`](https://github.com/aynaash/stingo/blob/main/AGENTS.md) in the
+repository is written for the agent itself — the loop that works, and the
+mistakes worth not making (never put a colour in a script, do not set `dur`
+first, look at frames).
 
 ## The loop it is built for
 

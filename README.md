@@ -17,11 +17,46 @@ the beat.
 **aesthetics**. Which is the whole idea: the look of a film is a thing you can
 name, keep in its own file, and swap. Your script never mentions a colour.
 
+## Let your AI make it
+
+A video here is a text file, so a model can write one — and, more importantly,
+render a frame and *look at what it made*. Clone the repository and your agent
+picks up `.mcp.json` automatically:
+
+```bash
+git clone https://github.com/aynaash/stingo
+cd stingo && bun install
+```
+
+Then just ask it. The MCP server hands the agent eleven tools, and the loop that
+works is: read the docs, validate, plan, **render a frame and look at it**, then
+render the film.
+
+```
+you     make me a five minute explainer on Go concurrency.
+        vertical, dark, cuts on the beat
+
+claude  ⏺ stingo_docs      script, blocks
+        ⏺ stingo_validate  ✓ 52 scenes, 1080x1920
+        ⏺ stingo_plan      4:50 · every cut on a downbeat
+        ⏺ stingo_still     at 23.0s  →  the frame, returned as an image
+```
+
+`stingo_still` returns the PNG itself, not a path. That is the whole point: a
+model that can see the frame catches what a schema cannot — a headline that
+wrapped badly, a chart bar that is invisible, a scene that ends before anyone
+could read it.
+
+Full setup, every tool, and the guards: **[Connect your AI](https://aynaash.github.io/stingo/mcp)**.
+[AGENTS.md](./AGENTS.md) is what an agent working in this repository should read first.
+
+## Or write it yourself
+
 ```bash
 bun add stingo          # library + `stingo` CLI
 ```
 
-Two ways to write a film. A typed script:
+A typed script:
 
 ```ts
 // film.ts

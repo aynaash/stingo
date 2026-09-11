@@ -292,8 +292,8 @@ export function topbar(base: string, current?: string) {
   return `<header class="top">
   <a class="wordmark" href="${u('/')}">stingo</a>
   <nav>
-    <a href="${u('start')}"${current ? ' aria-current="page"' : ''}>Docs</a>
-    <a href="${u('camera')}" data-optional>Talking head</a>
+    <a href="${u('mcp')}"${current ? ' aria-current="page"' : ''}>Connect your AI</a>
+    <a href="${u('start')}" data-optional>Docs</a>
     <a href="${GITHUB}/tree/main/examples" data-optional target="_blank" rel="noopener">Examples</a>
     <a href="${GITHUB}" target="_blank" rel="noopener">GitHub</a>
   </nav>

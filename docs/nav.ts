@@ -9,6 +9,12 @@ export interface Page {
 /** Ordered: this is both the sidebar and the reading order for prev/next. */
 export const PAGES: Page[] = [
   {
+    slug: 'mcp',
+    title: 'Connect your AI',
+    blurb: 'Give an agent the tools to write a script, render a frame, and look at what it made.',
+    section: 'Start here',
+  },
+  {
     slug: 'start',
     title: 'Getting started',
     blurb: 'Install it, render the example, and change one line to see what happens.',
@@ -42,12 +48,6 @@ export const PAGES: Page[] = [
     slug: 'cli',
     title: 'Commands',
     blurb: 'Every command and flag, and what each one is for.',
-    section: 'Reference',
-  },
-  {
-    slug: 'mcp',
-    title: 'Agents and MCP',
-    blurb: 'Let a model write a script, render a frame, and actually look at it.',
     section: 'Reference',
   },
   {

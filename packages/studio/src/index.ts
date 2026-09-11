@@ -74,7 +74,7 @@ export async function serve(opts: ServeOpts) {
         const n = Math.max(0, Math.min((film?.frameCount ?? 1) - 1, Number(url.searchParams.get('n') ?? 0)));
         if (!film) return new Response('not ready', { status: 503 });
         try {
-          const png = await film.framePng(n);
+          const png = new Uint8Array(await film.framePng(n));
           return new Response(png, { headers: { 'content-type': 'image/png', 'cache-control': 'no-store' } });
         } catch (e: any) {
           return new Response(e.message, { status: 500 });

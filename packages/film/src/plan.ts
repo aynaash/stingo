@@ -14,7 +14,7 @@ export type ClipTable = Map<string, number>;
 
 /** Estimate a scene's natural length: explicit > narration > block default.
  *  Content-aware bumps keep dense scenes on screen long enough to read. */
-export function estimateDuration(scene: Scene, taste: TasteProfile, grid: BeatGrid, clips?: ClipTable): number {
+export function estimateDuration(scene: Scene, taste: TasteProfile, grid: BeatGrid = DEFAULT_GRID, clips?: ClipTable): number {
   if (scene.dur != null) return toSeconds(scene.dur, grid);
 
   // a talking-head scene runs as long as the take does. Pacing bounds exist to

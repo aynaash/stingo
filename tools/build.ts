@@ -78,7 +78,12 @@ for (const [name, entry] of Object.entries(ENTRIES)) {
 }
 console.log(`\r  \x1b[32m✓\x1b[0m bundled   ${(bundled / 1024).toFixed(0)} KB in ${Date.now() - t0}ms`);
 
-// 2. fonts travel with the package. The renderer needs real font files and
+// 2. the published README is the repository's, copied rather than maintained
+//    twice — the npm copy had already drifted to an older block count
+await Bun.write(`${PKG}/README.md`, Bun.file('README.md'));
+console.log('  \x1b[32m✓\x1b[0m readme');
+
+// 3. fonts travel with the package. The renderer needs real font files and
 //    cannot rely on whatever directory a consumer happens to be standing in.
 process.stdout.write('  fonts…');
 const tf = Date.now();
@@ -93,13 +98,13 @@ for (const f of await readdir('assets/fonts')) {
 }
 console.log(`\r  \x1b[32m✓\x1b[0m fonts     ${(fontBytes / 1024 / 1024).toFixed(1)} MB in ${Date.now() - tf}ms`);
 
-// 3. emit declarations
+// 4. emit declarations
 process.stdout.write('  types…');
 const t1 = Date.now();
 await run(['node_modules/.bin/tsc', '-p', 'tsconfig.build.json'], 'tsc');
 console.log(`\r  \x1b[32m✓\x1b[0m types     in ${Date.now() - t1}ms`);
 
-// 4. report
+// 5. report
 const files = await readdir(OUT, { recursive: true } as any);
 console.log(`\n  ${OUT}/`);
 for (const f of (files as string[]).filter((f) => !f.includes('/')).sort()) {

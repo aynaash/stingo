@@ -138,6 +138,6 @@ can leave `dur` off until a scene actually feels wrong.
 ## Where to go next
 
 - [The script](script) — every field of a video document
-- [Blocks](blocks) — the twelve scene types
+- [Blocks](blocks) — the fourteen scene types
 - [Taste profiles](taste) — palette, motion, pacing, texture
 - [Talking head](camera) — putting yourself in the frame

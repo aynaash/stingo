@@ -81,6 +81,16 @@ document.
 Worth running before you commit to a track — if the confidence is low, set
 `bpm` by hand.
 
+## blocks
+
+```bash
+stingo blocks
+stingo blocks camera
+```
+
+Every registered scene type and the fields it takes, generated from the schema
+rather than written by hand. With a name, just that one.
+
 ## tastes
 
 ```bash

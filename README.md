@@ -37,8 +37,8 @@ you     make me a five minute explainer on Go concurrency.
         vertical, dark, cuts on the beat
 
 claude  ⏺ stingo_docs      script, blocks
-        ⏺ stingo_validate  ✓ 52 scenes, 1080x1920
-        ⏺ stingo_plan      4:50 · every cut on a downbeat
+        ⏺ stingo_validate  ✓ 53 scenes, 1080x1920
+        ⏺ stingo_plan      4:56 · every cut on a downbeat
         ⏺ stingo_still     at 23.0s  →  the frame, returned as an image
 ```
 
@@ -150,7 +150,7 @@ into the same document and rasterised in one pass.
 **Cuts land on the music.** Point it at a track and the beat grid is detected
 (spectral-flux onsets, autocorrelation tempo with a log-normal prior to avoid
 octave errors). Scene ends snap to bars, so every cut lands on a downbeat. In the
-example film every scene is an exact 8, 12, 16 or 20 beats — not by hand, by
+example film every scene after the first is an exact 8, 12, 16 or 20 beats — not by hand, by
 construction.
 
 ## Library
@@ -182,6 +182,9 @@ stingo beats  <audio>    # tempo, downbeat, onsets, loudness
 stingo preview <doc>     # live scrubbing preview at localhost:4321
 stingo tastes            # list built-in profiles
 stingo takes   <doc>     # inspect the camera takes a script references
+stingo blocks            # every scene type and the fields it takes
+stingo taste  <hex>      # derive a taste profile from one brand colour
+stingo doctor <taste>    # audit a profile against the contrast floors
 ```
 
 Useful flags: `--horizontal` / `--vertical` / `--square`, `--taste <name|path>`,
@@ -217,7 +220,7 @@ one file, with no central list to edit — see the Blocks page in the docs.
 
 ## B-roll
 
-Twelve procedural animated backgrounds, deterministic from a seed, no footage
+Eleven procedural animated backgrounds, deterministic from a seed, no footage
 needed: `grid` `dots` `particles` `waves` `codeRain` `beams` `pulse` `orbits`
 `mesh` `terrain` `noise` `none`. Each block picks a sensible default; override
 with `bg`.
@@ -236,6 +239,7 @@ blocks/   scene renderers, b-roll generators, layout stage
 themes/   built-in taste profiles
 film/     timeline planner, frame compositor, parallel renderer
 studio/   live preview server
+mcp/      the MCP server — tools an agent drives
 cli/      the stingo command
 ```
 
@@ -364,7 +368,7 @@ The goal is the complete technical content library for engineers: everything
 between having something to explain and having published it, expressible as
 code, reviewable as a diff, reproducible on a build server.
 
-Next up is captions and narration, then blocks that read your repository — a
+Next up is narration, then blocks that read your repository — a
 `diff` block that renders a real commit, a terminal block that runs the command
 rather than quoting what you remember it printing, and `stingo check` in CI to
 fail the build when a video's code no longer matches the code.

@@ -18,8 +18,8 @@ export function landing(base: string, hl: (code: string, lang: string) => string
         vertical, dark, cuts on the beat
 
 claude  ⏺ stingo_docs      script, blocks
-        ⏺ stingo_validate  ✓ 52 scenes, 1080x1920
-        ⏺ stingo_plan      4:50 · every cut on a downbeat
+        ⏺ stingo_validate  ✓ 53 scenes, 1080x1920
+        ⏺ stingo_plan      4:56 · every cut on a downbeat
         ⏺ stingo_still     at 23.0s  →  the frame, returned as an image`;
 
   // the scene beside the frame is the scene that produced it
@@ -211,7 +211,7 @@ ${topbar(base)}
     <figure><img src="${u('assets/img/block-statement.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="One sentence with a word picked out."><figcaption>statement</figcaption></figure>
     <figure><img src="${u('assets/img/block-quote.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A pull quote with an attribution."><figcaption>quote</figcaption></figure>
     <figure><img src="${u('assets/img/block-image.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A screenshot framed like a window."><figcaption>image</figcaption></figure>
-    <figure><img src="${u('assets/img/block-captions.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="Burned-in captions with the spoken word highlighted."><figcaption>captions</figcaption></figure>
+    <figure><img src="${u('assets/img/block-broll.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A procedurally generated animated background with a caption."><figcaption>broll</figcaption></figure>
     <figure><img src="${u('assets/img/block-camera.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A recorded take composited into the scene."><figcaption>camera</figcaption></figure>
     <figure><img src="${u('assets/img/block-outro.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A closing card with a handle."><figcaption>outro</figcaption></figure>
   </div>

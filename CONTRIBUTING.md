@@ -52,12 +52,16 @@ A block is a function from `(scene, ctx) → El`. Four things make one land:
 2. **Use `T.*` for type sizes** so it sits on the same modular scale as
    everything else.
 3. **Animate with `lifecycle()`**, so the taste's motion personality applies.
-4. **Register it** in `blocks/src/registry.ts`, add it to the schema union in
-   `schema/src/video.ts`, and give it an entry in `DEFAULT_DUR` in
-   `film/src/plan.ts`.
+4. **Declare it with `defineBlock`** — one call, in one file, carrying its
+   fields, its `duration`, its default `broll` and its `render`. The scene
+   schema, the renderer table and the duration rules are all derived from what
+   is registered; there is no central list to edit.
 
-Add a default b-roll for it in `Film.brollFor` too, so it never sits on flat
-colour.
+Importing the file is what registers it, so add `import './yourblock';` to
+`packages/blocks/src/registry.ts` and the built-in set picks it up everywhere at
+once — YAML, the planner, the preview and `stingo blocks`. Give it a `broll`
+default so it never sits on flat colour. The Blocks page in the docs has a
+worked example.
 
 ## Tests
 

@@ -203,7 +203,8 @@ export default film('Concurrency in Go')
 ```
 
 Every block has a constructor — `title`, `statement`, `code`, `terminal`,
-`stat`, `list`, `chart`, `quote`, `compare`, `broll`, `camera`, `outro` — and
+`stat`, `list`, `chart`, `diagram`, `image`, `quote`, `compare`, `broll`,
+`camera`, `outro` — and
 the shared scene options (`dur`, `at`, `id`, `say`, `bg`, `enter`, `exit`,
 `camera`, `cut`) are methods on all of them.
 

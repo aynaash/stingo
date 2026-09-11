@@ -29,7 +29,7 @@ export const PAGES: Page[] = [
   {
     slug: 'blocks',
     title: 'Blocks',
-    blurb: 'The twelve scene types, what each one takes, and what it looks like.',
+    blurb: 'The fourteen scene types, what each one takes, and what it looks like.',
     section: 'Reference',
   },
   {

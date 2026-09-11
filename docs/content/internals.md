@@ -49,8 +49,8 @@ Point it at a track and the beat grid is detected:
   time.
 - **Downbeat** by testing candidate offsets against onset strength.
 
-Then scene *ends* snap to bars. In the example film every scene is an exact 8,
-12, 16 or 20 beats — not by hand, by construction.
+Then scene *ends* snap to bars. In the example film every scene after the first is an
+exact 8, 12, 16 or 20 beats — not by hand, by construction.
 
 ```bash
 stingo beats assets/music/loop128.mp3
@@ -114,6 +114,7 @@ blocks/   scene renderers, b-roll generators, layout stage
 themes/   built-in taste profiles, derivation, contrast audit
 film/     timeline planner, frame compositor, parallel renderer
 studio/   live preview server
+mcp/      the MCP server — tools an agent drives
 cli/      the stingo command
 ```
 

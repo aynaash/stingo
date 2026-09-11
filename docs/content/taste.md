@@ -135,7 +135,9 @@ transition: { kind: fade, duration: 0.25 }
 music: { energy: medium, duckDb: -12, targetLufs: -14 }
 ```
 
-`kind` is `cut` · `fade` · `wipe` · `whip` · `glitch` · `slide`.
+`kind` is `cut` · `fade` · `wipe` · `whip` · `glitch` · `slide` — though only
+**`cut` and `fade` are implemented today**. The other four are accepted by the
+schema and render as a cut.
 `targetLufs` is the loudness the final mix is normalised to; −14 is what the
 platforms want.
 

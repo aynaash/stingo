@@ -62,6 +62,7 @@ ${C.b}OPTIONS${C.x}
   --draft               fast, lower quality pass for iterating
   --no-camera           draw camera placeholders instead of decoding footage
   --no-hud              hide the progress bar and scene counter
+  --debug               print a stack trace on failure
   --port <n>            preview server port (default 4321)
 
 ${C.b}TASTE OPTIONS${C.x} ${C.dim}(for \`taste\`)${C.x}

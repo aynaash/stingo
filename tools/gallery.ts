@@ -22,6 +22,7 @@ const TMP = '.stingo/gallery';
 const GRID = { bpm: 128.9, offset: 0.442, beatsPerBar: 4 };
 
 import { BLOCK_SHOTS, GO, type Shot } from './shots';
+import { makeStandIn } from './standin';
 import { stringify } from 'yaml';
 
 const ff = async (args: string[]) => {
@@ -79,6 +80,36 @@ if (!only || only === 'blocks') {
   await shot({ name: 'block-camera', scenes: [BLOCK_SHOTS.camera!.scene],
     taste: THEMES.bootdev, w: 1080, h: 1920, outW: 520, outH: 924, at: 0.5, noCamera: true });
   if (missing.length) console.log(`\x1b[33m  no shot defined for: ${missing.join(', ')}\x1b[0m`);
+}
+
+// ── the three camera layouts, decoded from a generated stand-in ────────────
+if (!only || only === 'camera') {
+  console.log('\n\x1b[2m  camera — three layouts, one stand-in take\x1b[0m');
+  // takes/ is gitignored, so there is no footage to shoot these against. A
+  // generated stand-in keeps the pictures honest: real decode, real blend,
+  // and a frame that says out loud it is not a person.
+  const take = await makeStandIn(join(TMP, 'standin.mp4'), { w: 1080, h: 1920, seconds: 12 });
+  const shape = { w: 1080, h: 1920, outW: 520, outH: 924, taste: THEMES.bootdev, noCamera: false } as const;
+
+  // `from` differs per shot so the three frames are three moments of one
+  // recording — which is how a real script feeds all the layouts. Keep
+  // from + the sampled moment inside the take, or it reads past the end.
+  await shot({ ...shape, name: 'camera-full', at: 0.5, scenes: [{ block: 'camera',
+    camera: { src: take, from: 0, layout: 'full', scrim: 0.28 },
+    lower: { name: 'Hersi', role: 'hersietech.com' },
+    caption: 'The take fills the frame; the words sit on top of it.' }] });
+
+  // a square inset crops to the middle of a portrait take, which lands on the
+  // chest — pulling the crop up is what the offsetY field is for
+  await shot({ ...shape, name: 'camera-pip', at: 0.6, scenes: [{ block: 'code',
+    lang: 'go', code: GO, highlight: [4, 5], caption: 'go starts it; the channel says when it finished.',
+    camera: { src: take, from: 3, layout: 'pip', corner: 'br', shape: 'circle', size: 0.3, zoom: 1.2, offsetY: -0.2 } }] });
+
+  await shot({ ...shape, name: 'camera-split', at: 0.7, scenes: [{ block: 'list',
+    title: 'Why Sleep fails', marker: 'arrow',
+    items: ['You are guessing how long work takes', 'Too short, and you drop results',
+            'Too long, and you waste the speedup', 'It will break on a slower machine'],
+    camera: { src: take, from: 5, layout: 'split', side: 'left', ratio: 0.45, offsetY: -0.08 } }] });
 }
 
 // ── the same scene under three tastes ──────────────────────────────────────

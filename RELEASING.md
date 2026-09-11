@@ -37,25 +37,43 @@ This is the step that catches a broken publish, and it costs a minute:
 
 ```bash
 cd packages/stingo
-npm pack --dry-run          # what would ship
-npm pack                    # produces stingo-<version>.tgz
+npm pack                       # produces stingo-<version>.tgz
 
-# install it somewhere that is not this repository
 cd $(mktemp -d)
-bun add /path/to/stingo-<version>.tgz
-bunx stingo tastes          # the CLI resolves
-bunx stingo-mcp < /dev/null # the MCP server starts and exits cleanly
+echo '{"name":"c","private":true}' > package.json
+npm install /path/to/stingo-<version>.tgz   # npm, NOT bun — see the trap above
+
+ls node_modules/.bin/          # both stingo and stingo-mcp must be here
+./node_modules/.bin/stingo tastes
+./node_modules/.bin/stingo still video.yaml --at 1 -o f.png   # fonts resolve
+./node_modules/.bin/stingo render video.yaml --draft -o v.mp4 # WORKERS SPAWN
 ```
 
-If anything reaches for a `workspace:*` dependency here, it will fail in exactly
-the way it would fail for a stranger.
+**Render, not just `still`.** They fail differently and only one of them was
+caught in testing. A still runs in-process; a render spawns worker processes by
+file path, and the bundle has no `worker.ts` next to it. If `render` is skipped,
+a package ships where every full render dies and only single frames work.
+
+If anything reaches for a `workspace:*` dependency here, it fails in exactly the
+way it would fail for a stranger.
 
 ## Publish
 
+The account has 2FA enforced for publishing, so an OTP is required:
+
 ```bash
 cd packages/stingo
-npm publish --access public
+npm publish --otp=123456        # six digits from your authenticator
 ```
+
+Without it npm returns `E403 ... Two-factor authentication or granular access
+token with bypass 2fa enabled is required`. The alternative is a granular access
+token with "bypass 2FA" enabled, which is worth setting up only for CI.
+
+**Publish from a commit, not from a dirty working tree.** `prepublishOnly`
+bundles whatever is on disk, so uncommitted work ends up in the tarball and the
+published version corresponds to nothing in the history. Check `git status`
+first; if it is not clean, commit or stash before publishing.
 
 `prepublishOnly` runs `tools/build.ts` first, so `dist/` is built from the
 current source rather than whatever was there last.

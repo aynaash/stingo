@@ -1,0 +1,393 @@
+title: Concurrency in Go, in five minutes
+canvas: { preset: vertical, fps: 30 }
+taste: ./taste.json
+audio:
+  music: assets/music/loop128.mp3
+  bpm: auto
+  musicGainDb: -19
+
+scenes:
+  # ── cold open ──────────────────────────────────────────────
+  - block: title
+    kicker: concurrency
+    text: Your program is waiting
+    sub: Most of the time, it is doing nothing at all.
+    bg: { kind: beams, opacity: 0.6, speed: 0.8 }
+
+  - block: statement
+    text: Waiting is not working.
+    emphasis: [working.]
+    bg: { kind: mesh, opacity: 0.55 }
+
+  - block: stat
+    value: "99%"
+    label: of a web request
+    sub: is spent waiting on something else — a database, a disk, a network.
+    bg: { kind: pulse, opacity: 0.5 }
+
+  - block: statement
+    text: Concurrency is how you stop waiting in a queue.
+    emphasis: [Concurrency]
+
+  # ── the problem with threads ───────────────────────────────
+  - block: title
+    kicker: chapter one
+    text: Threads are expensive
+    bg: { kind: terrain, opacity: 0.45 }
+
+  - block: compare
+    left:  { title: OS thread,  items: ["1 MB stack, reserved up front", "Kernel schedules it", "Context switch costs microseconds", "Thousands is a lot"] }
+    right: { title: goroutine,  items: ["2 KB stack, grows on demand", "Go runtime schedules it", "Switch costs nanoseconds", "Millions is fine"] }
+
+  - block: chart
+    kind: bar
+    title: stack size at birth
+    unit: " KB"
+    data:
+      - { label: OS thread, value: 1024 }
+      - { label: goroutine, value: 2 }
+    highlightIndex: 1
+
+  - block: statement
+    text: That is a five hundred times difference.
+    emphasis: [hundred, times]
+    bg: { kind: noise, opacity: 0.5 }
+
+  # ── goroutines ─────────────────────────────────────────────
+  - block: title
+    kicker: chapter two
+    text: One keyword
+    sub: The whole feature fits in two letters.
+
+  - block: code
+    lang: go
+    caption: This runs concurrently. That is the entire syntax.
+    code: |
+      func main() {
+          go download("a.txt")
+          go download("b.txt")
+          go download("c.txt")
+
+          time.Sleep(time.Second)
+      }
+    highlight: [2, 3, 4]
+
+  - block: statement
+    text: But that Sleep is a lie.
+    emphasis: [lie.]
+    bg: { kind: waves, opacity: 0.5 }
+
+  - block: list
+    title: Why Sleep fails
+    marker: arrow
+    items:
+      - You are guessing how long work takes
+      - Too short, and you drop results
+      - Too long, and you waste the speedup
+      - It will break on a slower machine
+
+  - block: statement
+    text: You need to be told when work is done.
+
+  # ── channels ───────────────────────────────────────────────
+  - block: title
+    kicker: chapter three
+    text: Channels
+    sub: A typed pipe between goroutines.
+    bg: { kind: orbits, opacity: 0.55 }
+
+  - block: code
+    lang: go
+    caption: Send on one side, receive on the other.
+    code: |
+      ch := make(chan string)
+
+      go func() {
+          ch <- "done"
+      }()
+
+      msg := <-ch
+    highlight: [4, 7]
+
+  - block: statement
+    text: A receive blocks until something arrives.
+    emphasis: [blocks]
+
+  - block: list
+    title: What that buys you
+    marker: check
+    items:
+      - No sleeping, no guessing
+      - The runtime parks the goroutine for free
+      - Waiting costs nothing while it waits
+
+  - block: quote
+    text: Do not communicate by sharing memory; share memory by communicating.
+    attrib: Rob Pike
+    bg: { kind: mesh, opacity: 0.5 }
+
+  # ── fan out ────────────────────────────────────────────────
+  - block: title
+    kicker: chapter three
+    text: Fan out, fan in
+    bg: { kind: particles, opacity: 0.55 }
+
+  - block: code
+    lang: go
+    caption: Start N workers, collect N results.
+    code: |
+      results := make(chan int, len(jobs))
+
+      for _, j := range jobs {
+          go func(j Job) {
+              results <- process(j)
+          }(j)
+      }
+
+      for range jobs {
+          total += <-results
+      }
+    highlight: [4, 5, 6]
+
+  - block: terminal
+    title: bench
+    lines:
+      - { prompt: "$", cmd: "go run serial.go",   out: "processed 200 jobs in 20.4s" }
+      - { prompt: "$", cmd: "go run parallel.go", out: "processed 200 jobs in 1.1s" }
+
+  - block: chart
+    kind: bar
+    title: 200 jobs, same machine
+    unit: "s"
+    data:
+      - { label: serial,   value: 20.4 }
+      - { label: parallel, value: 1.1 }
+    highlightIndex: 1
+
+  - block: stat
+    value: "18x"
+    label: faster
+    sub: Same CPU. Same code doing the work. It simply stopped waiting in line.
+    bg: { kind: pulse, opacity: 0.6 }
+
+
+  # ── waiting properly ───────────────────────────────────────
+  - block: title
+    kicker: chapter four
+    text: WaitGroup
+    sub: Count the work, not the seconds.
+    bg: { kind: orbits, opacity: 0.5 }
+
+  - block: code
+    lang: go
+    caption: Add before you start. Done when you finish. Wait for zero.
+    code: |
+      var wg sync.WaitGroup
+
+      for _, url := range urls {
+          wg.Add(1)
+          go func(u string) {
+              defer wg.Done()
+              fetch(u)
+          }(u)
+      }
+
+      wg.Wait()
+    highlight: [4, 6, 11]
+
+  - block: statement
+    text: Now the Sleep is gone for good.
+    emphasis: [gone]
+
+  - block: list
+    title: The rule
+    marker: arrow
+    items:
+      - Add before the goroutine starts, never inside it
+      - defer Done so a panic still counts
+      - Wait blocks until the counter hits zero
+
+  - block: broll
+    caption: "…and when goroutines must share, not communicate:"
+    dur: 2bar
+    bg: { kind: waves, opacity: 0.7, speed: 1.4 }
+
+  - block: code
+    lang: go
+    caption: A mutex is the escape hatch, not the default.
+    code: |
+      var mu sync.Mutex
+      count := 0
+
+      go func() {
+          mu.Lock()
+          count++
+          mu.Unlock()
+      }()
+    highlight: [5, 7]
+
+  - block: compare
+    left:  { title: reach for a channel, items: ["Passing ownership along", "Signalling that work finished", "Streaming results out", "Fan out and fan in"] }
+    right: { title: reach for a mutex,   items: ["Guarding one shared counter", "Protecting a cache or map", "Short critical sections", "Nothing to hand over"] }
+
+  # ── context ────────────────────────────────────────────────
+  - block: title
+    kicker: chapter five
+    text: context
+    sub: How you tell a goroutine to stop.
+    bg: { kind: beams, opacity: 0.5 }
+
+  - block: code
+    lang: go
+    caption: Every blocking call should take one.
+    code: |
+      ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+      defer cancel()
+
+      rows, err := db.QueryContext(ctx, q)
+      if err != nil {
+          return err
+      }
+    highlight: [1, 4]
+
+  - block: statement
+    text: A goroutine you cannot cancel is a leak you have not noticed yet.
+    emphasis: [leak]
+    bg: { kind: noise, opacity: 0.4 }
+
+  - block: stat
+    value: "2"
+    label: rules of thumb
+    sub: Pass context first. Cancel with defer. That is most of it.
+    bg: { kind: pulse, opacity: 0.5 }
+
+  # ── select ─────────────────────────────────────────────────
+  - block: title
+    kicker: chapter six
+    text: select
+    sub: Wait on several things at once.
+
+  - block: code
+    lang: go
+    caption: Whichever is ready first wins.
+    code: |
+      select {
+      case msg := <-ch:
+          handle(msg)
+      case <-time.After(2 * time.Second):
+          return ErrTimeout
+      case <-ctx.Done():
+          return ctx.Err()
+      }
+    highlight: [4, 6]
+
+  - block: list
+    title: select gives you
+    marker: arrow
+    items:
+      - Timeouts without a timer goroutine
+      - Cancellation that actually propagates
+      - Whichever answer arrives first
+
+
+  # ── the scheduler ──────────────────────────────────────────
+  - block: title
+    kicker: under the hood
+    text: Who runs all of them?
+    bg: { kind: orbits, opacity: 0.55, speed: 0.7 }
+
+  - block: statement
+    text: Go multiplexes many goroutines onto few OS threads.
+    emphasis: [many, few]
+
+  - block: chart
+    kind: bar
+    title: one million goroutines
+    unit: " GB"
+    data:
+      - { label: "as OS threads", value: 1024 }
+      - { label: "as goroutines", value: 2 }
+    highlightIndex: 1
+
+  # ── the traps ──────────────────────────────────────────────
+  - block: title
+    kicker: chapter seven
+    text: Three ways to get hurt
+    bg: { kind: codeRain, opacity: 0.3 }
+
+  - block: code
+    lang: go
+    caption: "One: a goroutine nobody is listening to leaks forever."
+    code: |
+      func leak() {
+          ch := make(chan int)
+          go func() {
+              ch <- compute()   // blocks forever
+          }()
+          return               // nobody receives
+      }
+    highlight: [4, 6]
+
+  - block: code
+    lang: go
+    caption: "Two: unsynchronised writes are a data race, not a bug you can see."
+    code: |
+      count := 0
+      for i := 0; i < 1000; i++ {
+          go func() {
+              count++    // race
+          }()
+      }
+    highlight: [4]
+
+  - block: terminal
+    title: race detector
+    lines:
+      - { prompt: "$", cmd: "go run -race main.go", out: "WARNING: DATA RACE\n  Write at 0x00c000123 by goroutine 8\n  Previous write by goroutine 7" }
+
+  - block: code
+    lang: go
+    caption: "Three: deadlock. Everyone is waiting, nobody is sending."
+    code: |
+      ch := make(chan int)
+      ch <- 1     // no receiver, ever
+    highlight: [2]
+
+  - block: statement
+    text: The runtime will tell you. Loudly.
+    bg: { kind: noise, opacity: 0.45 }
+
+  - block: terminal
+    title: bash
+    lines:
+      - { prompt: "$", cmd: "go run deadlock.go", out: "fatal error: all goroutines are asleep - deadlock!" }
+
+  # ── close ──────────────────────────────────────────────────
+  - block: title
+    kicker: recap
+    text: What to remember
+    bg: { kind: dots, opacity: 0.45 }
+
+  - block: list
+    marker: num
+    items:
+      - "go starts work; it does not wait for it"
+      - Channels are how goroutines say "done"
+      - select waits on many things at once
+      - Always run the race detector
+      - "-race in CI costs nothing and finds everything"
+
+  - block: quote
+    text: Concurrency is about dealing with lots of things at once. Parallelism is about doing lots of things at once.
+    attrib: Rob Pike
+    bg: { kind: mesh, opacity: 0.5 }
+
+  - block: statement
+    text: Go gives you the first one cheaply enough to stop thinking about it.
+    emphasis: [cheaply]
+
+  - block: outro
+    text: Now go write something concurrent
+    sub: Then run it with -race.
+    handle: "@stingo"
+    bg: { kind: particles, opacity: 0.7, speed: 1.2 }

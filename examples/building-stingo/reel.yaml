@@ -1,0 +1,61 @@
+# The vertical cut of the launch video — one idea, under a minute.
+#
+# Same taste profile as the long video, so the two read as one release. The
+# takes are separate: a reel needs its own delivery, not a trimmed eight-minute
+# one. See RECORDING.md.
+#
+#   stingo render examples/building-stingo/reel.yaml --no-camera
+
+title: I built my own video tool
+canvas: { preset: vertical, fps: 30 }
+taste: ./taste.json
+audio:
+  music: ../../assets/music/loop128.mp3
+  bpm: auto
+  musicGainDb: -21
+
+scenes:
+  - block: camera
+    dur: 6s
+    camera: { src: takes/reel-01-hook.mp4, layout: full, scrim: 0.18 }
+    lower: { name: Hersi }
+    say: I got tired of dragging rectangles around a timeline, so I wrote a tool where the video is a text file.
+
+  - block: statement
+    text: This video is a text file.
+    emphasis: [text, file.]
+    bg: { kind: mesh, opacity: 0.6 }
+
+  - block: code
+    lang: yaml
+    caption: This scene is these six lines.
+    code: |
+      - block: statement
+        text: This video is a text file.
+        emphasis: [text, file.]
+        bg: { kind: mesh, opacity: 0.6 }
+    highlight: [1, 2]
+    camera: { src: takes/reel-02-two.mp4, layout: pip, corner: br, size: 0.32, shape: circle }
+
+  - block: compare
+    left:  { title: video.yaml, items: ["What you say", "No colours"] }
+    right: { title: taste.json, items: ["How it looks", "No topic"] }
+
+  - block: statement
+    text: Swap one file and it is a different film.
+    emphasis: [different, film.]
+
+  - block: stat
+    value: 33ms
+    label: per frame
+    sub: Down from 585. Mostly by deleting work.
+
+  - block: camera
+    dur: 7s
+    camera: { src: takes/reel-03-close.mp4, layout: full, scrim: 0.2 }
+    say: It is open source, and the script for this exact reel is in the repo. Link in the bio.
+
+  - block: outro
+    text: stingo
+    sub: Declarative video.
+    handle: github.com/aynaash/stingo

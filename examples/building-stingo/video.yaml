@@ -1,0 +1,279 @@
+# The launch video for stingo, written in stingo.
+#
+# Camera scenes point at takes/ that do not exist yet. That is deliberate:
+# `stingo plan` and `stingo preview` work on a script before a single frame is
+# shot, so the edit gets locked first and the footage is recorded to fit it.
+# See RECORDING.md for what to shoot.
+#
+#   stingo plan   examples/building-stingo/video.yaml     # the cut, no footage
+#   stingo render examples/building-stingo/video.yaml --no-camera
+#   stingo render examples/building-stingo/video.yaml     # once takes exist
+
+title: I built my own video tool
+canvas: { preset: horizontal, fps: 30 }
+taste: ./taste.json
+audio:
+  music: ../../assets/music/loop128.mp3
+  bpm: auto
+  musicGainDb: -24        # low: there is speech over most of this
+
+scenes:
+  # ── cold open ────────────────────────────────────────────────────────
+  - block: camera
+    dur: 14s
+    camera: { src: takes/01-hook.mp4, layout: full, scrim: 0.18 }
+    lower: { name: Hersi, role: hersietech.com }
+    say: >
+      Every video you have seen about code was made by dragging rectangles
+      around a timeline. I got tired of that. So I wrote a tool where the video
+      is a text file, and this video is the first thing I made with it.
+
+  - block: statement
+    text: This video was made by the tool it is about.
+    emphasis: [tool, about.]
+    bg: { kind: mesh, opacity: 0.55 }
+
+  # ── the problem ──────────────────────────────────────────────────────
+  - block: camera
+    dur: 16s
+    camera: { src: takes/02-problem.mp4, layout: pip, corner: br, size: 0.26, shape: rounded }
+    say: >
+      Here is the thing about editing software. Every change means finding the
+      clip, dragging the edge, nudging the keyframe, and re-watching it. The
+      work is real, but none of it is the idea.
+
+  - block: list
+    title: What an edit actually costs
+    marker: num
+    items:
+      - Find the clip on the timeline
+      - Drag the edge, nudge the keyframe
+      - Re-watch to check it landed
+      - Repeat for every single change
+    camera: { src: takes/02-problem.mp4, from: 4, layout: pip, corner: br, size: 0.26 }
+
+  - block: statement
+    text: None of that is the idea. It is all bookkeeping.
+    emphasis: [bookkeeping.]
+
+  # ── the wish ─────────────────────────────────────────────────────────
+  - block: camera
+    dur: 12s
+    camera: { src: takes/03-wish.mp4, layout: full, scrim: 0.2 }
+    say: >
+      What I wanted was a diff. I wanted to change one line, run one command,
+      and get a new video. The way you change code.
+
+  - block: code
+    lang: diff
+    caption: This is the whole ask.
+    code: |
+      - text: Goroutines are threads
+      + text: Goroutines are not threads
+    highlight: [2]
+
+  # ── the idea ─────────────────────────────────────────────────────────
+  - block: title
+    kicker: the idea
+    text: A video is two files
+    sub: What you say, and how it looks. Never the same file.
+
+  - block: compare
+    left:  { title: video.yaml,  items: ["Scenes and order", "Code, data, narration", "Nothing about colour"] }
+    right: { title: taste.json,  items: ["Palette and type", "Motion and pacing", "Nothing about your topic"] }
+    camera: { src: takes/04-two-files.mp4, layout: split, side: left, ratio: 0.38 }
+
+  - block: camera
+    dur: 13s
+    camera: { src: takes/04-two-files.mp4, from: 13, layout: full, scrim: 0.2 }
+    say: >
+      The script never mentions a colour. The taste file never mentions your
+      topic. Swap the taste and the same script becomes a completely different
+      film. That separation is the entire point of the tool.
+
+  - block: broll
+    caption: Same script. Three taste profiles.
+    dur: 6s
+    bg: { kind: orbits, opacity: 0.75, speed: 1.2 }
+
+  # ── how it works ─────────────────────────────────────────────────────
+  - block: title
+    kicker: chapter one
+    text: A frame is a pure function
+    sub: Nothing carries over from the frame before it.
+
+  - block: code
+    lang: ts
+    caption: Frame 4821 renders without rendering the 4820 before it.
+    code: |
+      const px = await film.framePixels(4821)
+    camera: { src: takes/05-pure.mp4, layout: pip, corner: tr, size: 0.28 }
+
+  - block: camera
+    dur: 18s
+    camera: { src: takes/05-pure.mp4, from: 6, layout: full, scrim: 0.2 }
+    say: >
+      That one constraint buys everything else. Scrubbing is free, because any
+      frame is one call. Rendering is parallel, because no worker needs to know
+      what another worker did. And the output is deterministic — same input,
+      same bytes, every time.
+
+  - block: list
+    title: What that constraint buys
+    marker: check
+    items:
+      - Seekable scrubbing, with no pre-render
+      - Parallel rendering across processes
+      - Deterministic, reproducible output
+      - Cheap re-renders of one changed scene
+
+  # ── layout is CSS ────────────────────────────────────────────────────
+  - block: title
+    kicker: chapter two
+    text: Layout is CSS, drawing is SVG
+    sub: No browser anywhere in the pipeline.
+
+  - block: code
+    lang: ts
+    caption: satori does real flexbox and emits SVG. resvg rasterises it.
+    code: |
+      const svg = await satori(tree, { width, height, fonts })
+      const px  = new Resvg(svg, { font: { loadSystemFonts: false } })
+                    .render().pixels
+    highlight: [1, 2]
+    camera: { src: takes/06-satori.mp4, layout: pip, corner: br, size: 0.26 }
+
+  # ── the beat ─────────────────────────────────────────────────────────
+  - block: title
+    kicker: chapter three
+    text: Cuts land on the music
+    sub: Not by hand. By construction.
+
+  - block: camera
+    dur: 16s
+    camera: { src: takes/07-beats.mp4, layout: full, scrim: 0.2 }
+    say: >
+      Point it at a track and it finds the beat — spectral flux for the onsets,
+      autocorrelation for the tempo, with a log-normal prior so it does not pick
+      double or half time. Then every scene end snaps to a bar.
+
+  - block: terminal
+    title: bash
+    lines:
+      - { prompt: "$", cmd: "stingo beats assets/music/loop128.mp3" }
+      - { out: "tempo      128.9 BPM (confidence 91%)" }
+      - { out: "downbeat   0.371s" }
+      - { out: "bar        1.862s (4 beats)" }
+      - { out: "onsets     412" }
+
+  - block: stat
+    value: "100%"
+    label: of cuts on a downbeat
+    sub: Every scene is an exact 8, 12, 16 or 20 beats — not by hand, by construction.
+
+  # ── performance ──────────────────────────────────────────────────────
+  - block: title
+    kicker: chapter four
+    text: 585ms to 33ms
+    sub: Three changes did almost all of it.
+
+  - block: chart
+    kind: bar
+    title: milliseconds per frame
+    unit: " ms"
+    data:
+      - { label: where it started, value: 585 }
+      - { label: no system fonts, value: 145 }
+      - { label: raw pixels, value: 53 }
+      - { label: no SVG filters, value: 33 }
+    highlightIndex: 3
+    camera: { src: takes/08-perf.mp4, layout: split, side: right, ratio: 0.34 }
+
+  - block: camera
+    dur: 20s
+    camera: { src: takes/08-perf.mp4, from: 9, layout: full, scrim: 0.2 }
+    say: >
+      The big one was embarrassing. resvg was scanning six hundred and forty
+      nine system fonts on every single frame — and it did not need one of them,
+      because satori had already embedded the glyphs as paths. One flag. Four
+      hundred and forty milliseconds.
+
+  - block: code
+    lang: ts
+    caption: The whole fix.
+    code: |
+      new Resvg(svg, {
+        font: { loadSystemFonts: false },
+      })
+    highlight: [2]
+
+  - block: list
+    title: The other two
+    marker: arrow
+    items:
+      - "Raw RGBA instead of PNG — ffmpeg wants pixels, not a compressed file"
+      - "No full-frame SVG filters — a blur over 2 megapixels costs 9.5 seconds"
+      - "Grain and vignette moved to a lookup table over the pixel buffer"
+
+  - block: statement
+    text: Every fix was deleting work, not adding cleverness.
+    emphasis: [deleting]
+
+  # ── the camera block, i.e. this video ────────────────────────────────
+  - block: title
+    kicker: chapter five
+    text: Then I needed my own face
+    sub: A tool for explainers that cannot show the explainer.
+
+  - block: camera
+    dur: 17s
+    camera: { src: takes/09-camera.mp4, layout: full, scrim: 0.18 }
+    say: >
+      Which brings us to the shot you are looking at. Everything so far was
+      procedural — generated from text. But an eight minute video needs a person
+      in it. So the last thing I built was a camera block.
+
+  - block: compare
+    left:  { title: procedural, items: ["Generated from the script", "Deterministic", "Costs milliseconds"] }
+    right: { title: camera,     items: ["Decoded from a take", "Placed on the timeline", "Composited under the frame"] }
+
+  - block: code
+    lang: yaml
+    caption: Three layouts, chosen per scene.
+    code: |
+      - block: code
+        camera:
+          src: takes/09-camera.mp4
+          layout: pip      # full | pip | split
+          corner: br
+          size: 0.28
+    highlight: [4]
+    camera: { src: takes/09-camera.mp4, from: 8, layout: pip, corner: br, size: 0.28 }
+
+  - block: camera
+    dur: 15s
+    camera: { src: takes/09-camera.mp4, from: 14, layout: full, scrim: 0.2 }
+    say: >
+      The take is never drawn into the SVG. It is pixels. So the renderer cuts a
+      hole where the camera goes, and the decoded frame is blended in underneath
+      afterwards. Which layers get the hole is what decides whether my face is
+      over the code or behind the caption.
+
+  # ── close ────────────────────────────────────────────────────────────
+  - block: statement
+    text: The whole thing is open source.
+    emphasis: [open, source.]
+    bg: { kind: particles, opacity: 0.6 }
+
+  - block: camera
+    dur: 14s
+    camera: { src: takes/10-outro.mp4, layout: full, scrim: 0.2 }
+    say: >
+      It is on GitHub, it is AGPL, and the script for this exact video is in the
+      examples folder. If you make something with it, I would genuinely like to
+      see it.
+
+  - block: outro
+    text: stingo
+    sub: Declarative video for people who ship content.
+    handle: github.com/aynaash/stingo

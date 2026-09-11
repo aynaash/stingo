@@ -1,0 +1,58 @@
+{
+  "id": "neon-campus",
+  "name": "Neon Campus",
+
+  "_comment": "This file is the aesthetic half of a video. Swap it and the same script becomes a different film: different palette, type, motion personality, pacing and grain. Nothing here mentions goroutines.",
+
+  "palette": {
+    "bg":         "#0a0912",
+    "surface":    "#161331",
+    "surfaceAlt": "#1f1a44",
+    "border":     "#332c66",
+    "text":       "#f6f4ff",
+    "muted":      "#9089b8",
+    "accent":     "#b18cff",
+    "accent2":    "#2ee6c4",
+    "warn":       "#ffc857",
+    "danger":     "#ff6b8a",
+    "ok":         "#5ce88b"
+  },
+
+  "type": {
+    "display": { "family": "JetBrains Mono", "weight": 800, "tracking": -0.04, "lineHeight": 1.02, "transform": "none" },
+    "body":    { "family": "Inter",          "weight": 400, "tracking": -0.012, "lineHeight": 1.45, "transform": "none" },
+    "mono":    { "family": "JetBrains Mono", "weight": 400, "tracking": 0,     "lineHeight": 1.55, "transform": "none" },
+    "scale": 1.02
+  },
+
+  "motion": {
+    "personality": "snappy",
+    "enter": 0.4,
+    "exit": 0.26,
+    "stagger": 0.065,
+    "ease": "expo.out",
+    "spring": { "stiffness": 200, "damping": 16, "mass": 1 },
+    "travel": 58
+  },
+
+  "pacing": {
+    "sceneMin": 2.6,
+    "sceneMax": 13,
+    "wordsPerMinute": 162,
+    "cutOn": "bar",
+    "breath": 0.3
+  },
+
+  "texture": {
+    "grain": 0.05,
+    "scanlines": 0.022,
+    "vignette": 0.38,
+    "glow": 0.55,
+    "grid": 0.09,
+    "cornerRadius": 18
+  },
+
+  "transition": { "kind": "fade", "duration": 0.2 },
+
+  "music": { "energy": "high", "duckDb": -13, "targetLufs": -14 }
+}

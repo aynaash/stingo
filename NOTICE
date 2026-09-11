@@ -1,0 +1,27 @@
+stingo — declarative video for people who ship content
+Copyright (C) 2026 Hersi (github.com/aynaash)
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. See LICENSE for the full text.
+
+Why AGPL: stingo is meant to be used, forked and learned from. The network
+clause exists so that a hosted "render your video" service built on it stays
+open too. Using stingo to make videos puts no licence on the videos — the films
+you render are yours, exactly as a compiler's output is yours.
+
+Third-party components, all permissive and compatible:
+
+  satori            MPL-2.0   github.com/vercel/satori
+  @resvg/resvg-js   MPL-2.0   github.com/thx/resvg-js
+  shiki             MIT       github.com/shikijs/shiki
+  zod               MIT       github.com/colinhacks/zod
+  d3-shape          ISC       github.com/d3/d3-shape
+  d3-scale          ISC       github.com/d3/d3-scale
+  yaml              ISC       github.com/eemeli/yaml
+
+MPL-2.0 is file-level copyleft and is explicitly compatible with the GNU
+licences (MPL-2.0 §1.12, "Secondary License"); those files remain under MPL-2.0.
+
+Bundled fonts are covered by their own licences, in assets/fonts.

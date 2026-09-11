@@ -1,0 +1,4 @@
+# Footage lives outside the repository — see ../RECORDING.md.
+# The directory is tracked so a script still plans and previews without it.
+*
+!.gitignore

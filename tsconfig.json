@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM"],
+    "types": ["bun"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": false,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "paths": {
+      "@stingo/schema": ["./packages/schema/src/index.ts"],
+      "@stingo/core": ["./packages/core/src/index.ts"],
+      "@stingo/render": ["./packages/render/src/index.ts"],
+      "@stingo/blocks": ["./packages/blocks/src/index.ts"],
+      "@stingo/themes": ["./packages/themes/src/index.ts"],
+      "@stingo/film": ["./packages/film/src/index.ts"],
+      "@stingo/audio": ["./packages/audio/src/index.ts"],
+      "@stingo/encode": ["./packages/encode/src/index.ts"],
+      "stingo": ["./packages/stingo/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src/**/*.ts", "tools/**/*.ts", "test/**/*.ts", "examples/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/node_modules"]
+}

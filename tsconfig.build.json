@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
+    "allowImportingTsExtensions": false,
+    "outDir": "packages/stingo/dist/types",
+    "rootDir": "packages"
+  },
+  "include": ["packages/*/src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "packages/studio/**", "packages/cli/**"]
+}

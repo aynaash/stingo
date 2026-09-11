@@ -1,51 +1,45 @@
 import { Timeline, toSeconds, snap, speakDuration, type BeatGrid, type Cue, DEFAULT_GRID } from '@stingo/core';
-import type { VideoDoc, TasteProfile, Scene } from '@stingo/schema';
-
-/** Fallback scene length by block type, before taste pacing clamps it. */
-const DEFAULT_DUR: Record<Scene['block'], number> = {
-  title: 4.5, statement: 4, quote: 6, list: 7, outro: 5, broll: 3.5,
-  code: 8, terminal: 9, stat: 4.5, chart: 7, compare: 7.5, camera: 8,
-};
+import type { VideoDoc, TasteProfile, Scene, DurationCtx } from '@stingo/schema';
+import { blockDuration } from '@stingo/schema';
 
 /** Measured lengths of the takes referenced by a document, keyed by resolved
  *  path. Probing is async and planning is not, so the durations are gathered
  *  once up front — see probeClips. */
 export type ClipTable = Map<string, number>;
 
-/** Estimate a scene's natural length: explicit > narration > block default.
- *  Content-aware bumps keep dense scenes on screen long enough to read. */
-export function estimateDuration(scene: Scene, taste: TasteProfile, grid: BeatGrid = DEFAULT_GRID, clips?: ClipTable): number {
+/** Estimate a scene's natural length: explicit > block estimate > narration >
+ *  block default, then clamped to the taste's pacing bounds.
+ *
+ *  Nothing here knows what any particular block is. The rules come from the
+ *  block's own `duration` spec, so a new block brings its timing with it. */
+export function estimateDuration(
+  scene: Scene, taste: TasteProfile, grid: BeatGrid = DEFAULT_GRID, clips?: ClipTable,
+): number {
   if (scene.dur != null) return toSeconds(scene.dur, grid);
 
-  // a talking-head scene runs as long as the take does. Pacing bounds exist to
-  // stop a caption sitting on screen too long; they have no business trimming
-  // a sentence someone is in the middle of saying.
-  if (scene.block === 'camera') {
-    const len = clips?.get(scene.camera.src);
-    if (len != null) {
-      const from = toSeconds(scene.camera.from, grid);
-      const remaining = len - from;
-      if (remaining > 0.05) return remaining;
-    }
-    return DEFAULT_DUR.camera;
-  }
-  let d = scene.say ? speakDuration(scene.say, taste.pacing.wordsPerMinute, taste.pacing.breath) : DEFAULT_DUR[scene.block];
+  const spec = blockDuration(scene.block);
+  const ctx: DurationCtx = {
+    wordsPerMinute: taste.pacing.wordsPerMinute,
+    breath: taste.pacing.breath,
+    clips,
+    seconds: (v, fallback = 0) => toSeconds(v, grid, fallback),
+  };
 
-  // reading time scales with how much is actually on screen
-  if (scene.block === 'code' && scene.code) {
-    const lines = scene.code.trim().split('\n').length;
-    d = Math.max(d, 1.8 + lines * 0.42);
-  } else if (scene.block === 'list') {
-    d = Math.max(d, 1.6 + scene.items.length * 0.95);
-  } else if (scene.block === 'terminal') {
-    const cost = scene.lines.reduce((a, l) => a + (l.cmd ? 0.3 + l.cmd.length * 0.028 : 0) + (l.out ? 0.5 : 0.2), 0);
-    d = Math.max(d, 1.2 + cost);
-  } else if (scene.block === 'compare') {
-    d = Math.max(d, 2 + (scene.left.items.length + scene.right.items.length) * 0.55);
-  } else if (scene.block === 'chart') {
-    d = Math.max(d, 2.2 + scene.data.length * 0.55);
-  }
-  return Math.min(Math.max(d, taste.pacing.sceneMin), taste.pacing.sceneMax);
+  const fromBlock = spec.estimate?.(scene, ctx) ?? null;
+
+  // an exact block owns its length outright — a take that is cut mid-sentence
+  // to satisfy a pacing bound is worse than a scene that runs long
+  if (spec.exact && fromBlock != null) return fromBlock;
+
+  // narration replaces the block's default length; the content estimate then
+  // acts as a floor on top of that, never a replacement for it
+  const primary = scene.say
+    ? speakDuration(scene.say, taste.pacing.wordsPerMinute, taste.pacing.breath)
+    : spec.base;
+  const chosen = Math.max(primary, fromBlock ?? 0);
+
+  if (spec.exact) return chosen;
+  return Math.min(Math.max(chosen, taste.pacing.sceneMin), taste.pacing.sceneMax);
 }
 
 export interface PlanResult { timeline: Timeline; warnings: string[] }

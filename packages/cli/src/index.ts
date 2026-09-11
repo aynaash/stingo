@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 import { parseArgs, num, str } from './args';
 import { loadDoc, loadTaste } from './load';
-import { Film, renderVideo, plan, probeClips, cameraAudioCuts } from '@stingo/film';
+import { Film, renderVideo, plan, probeClips, cameraAudioCuts, checkTextFits, captionCues, toSrt, toVtt } from '@stingo/film';
 import { analyzeBeats, mixAudio, measureLoudness } from '@stingo/audio';
 import { THEMES, derive, audit, repair, contrast, HOUSE } from '@stingo/themes';
-import { CANVAS_PRESETS, TasteProfile } from '@stingo/schema';
+import { CANVAS_PRESETS, TasteProfile, allBlocks, blockNames } from '@stingo/schema';
+import '@stingo/blocks';   // registering the built-in block set
 import { DEFAULT_GRID, toSeconds, type BeatGrid } from '@stingo/core';
 import { dirname, join, resolve, basename, extname } from 'node:path';
 import { mkdir } from 'node:fs/promises';
@@ -39,6 +40,7 @@ ${C.b}COMMANDS${C.x}
   ${C.t}still${C.x}  <doc>        render a single frame to PNG
   ${C.t}plan${C.x}   <doc>        print the resolved timeline, render nothing
   ${C.t}beats${C.x}  <audio>      analyse tempo, downbeat and onsets
+  ${C.t}blocks${C.x}              list registered blocks and their fields
   ${C.t}tastes${C.x}              list built-in taste profiles
   ${C.t}taste${C.x}  <brand-hex>   derive a full taste profile from one colour
   ${C.t}doctor${C.x} <taste>       audit a taste profile against the house floors
@@ -101,6 +103,7 @@ try {
       if (info.length) log(`${C.dim}  camera ${info.length} take${info.length > 1 ? 's' : ''} · ${info.map((i) => `${basename(i.src)} ${fmtT(i.duration)}`).join(' · ')}${C.x}`);
       for (const m of missing) log(`${C.y}  warning: camera source not readable, rendering a placeholder — ${m}${C.x}`);
       for (const w of warnings) log(`${C.y}  warning: ${w}${C.x}`);
+      for (const w of await checkTextFits(doc, taste)) log(`${C.y}  warning: ${w}${C.x}`);
       log();
 
       const noCamera = !!flags['no-camera'];
@@ -135,11 +138,28 @@ try {
           process.stdout.write(`  ${bar(d, t)} ${C.dim}${d}/${t} frames · eta ${fmtT(eta)}${C.x}   \r`);
         },
       });
+      // A sidecar goes out whenever captions are on, burned in or not: every
+      // platform takes an upload track, and a burned-in caption is invisible to
+      // search. Costs nothing to write.
+      let sidecars: string[] = [];
+      if (doc.captions?.enabled) {
+        const cues = captionCues(doc, timeline, taste);
+        if (cues.length) {
+          const stem = out.replace(/\.mp4$/, '');
+          await Bun.write(`${stem}.srt`, toSrt(cues));
+          await Bun.write(`${stem}.vtt`, toVtt(cues));
+          sidecars = [`${stem}.srt`, `${stem}.vtt`];
+        } else {
+          log(`${C.y}  warning: captions are enabled but no scene has a \`say\` field${C.x}`);
+        }
+      }
+
       const size = (await Bun.file(res.file).size) / 1e6;
       log(`  ${bar(res.frames, res.frames)} ${C.dim}${res.frames}/${res.frames} frames${C.x}      `);
       log();
       log(`${C.g}${C.b}  ✓ ${res.file}${C.x}`);
       log(`${C.dim}    ${fmtT(res.duration)} · ${size.toFixed(1)} MB · rendered in ${fmtT(res.seconds)} on ${res.workers} workers · ${(res.duration / res.seconds).toFixed(2)}x realtime${C.x}`);
+      for (const f of sidecars) log(`${C.g}  ✓${C.x} ${f}`);
       break;
     }
 
@@ -185,6 +205,7 @@ try {
       log(`  ${C.b}total${C.x} ${fmtT(timeline.duration)} · ${timeline.frameCount} frames`);
       for (const m of missing) log(`${C.y}  warning: camera source not readable — ${m}${C.x}`);
       for (const w of warnings) log(`${C.y}  warning: ${w}${C.x}`);
+      for (const w of await checkTextFits(doc, taste)) log(`${C.y}  warning: ${w}${C.x}`);
       break;
     }
 
@@ -202,6 +223,30 @@ try {
       if (l) log(`  loudness   ${l.lufs.toFixed(1)} LUFS ${C.dim}· true peak ${l.peak.toFixed(1)} dBTP${C.x}`);
       log();
       log(`${C.dim}  use in a doc:  audio: { music: "${basename(file)}", bpm: ${a.bpm} }${C.x}`);
+      break;
+    }
+
+    case 'blocks': {
+      const defs = allBlocks();
+      const want = positional[0];
+      log(`${C.b}${defs.length} registered blocks${C.x}`);
+      log();
+      for (const d of defs) {
+        if (want && d.name !== want) continue;
+        log(`  ${C.p}${C.b}${d.name}${C.x}${d.describe ? ` ${C.dim}— ${d.describe}${C.x}` : ''}`);
+        const fields = Object.entries(d.fields as Record<string, any>);
+        for (const [k, v] of fields) {
+          // zod keeps the human-readable shape name on the def
+          const t = v?._zod?.def?.type ?? 'unknown';
+          const optional = v?.safeParse?.(undefined)?.success ? ' ?' : '';
+          log(`      ${C.t}${k}${C.x}${optional} ${C.dim}${t}${C.x}`);
+        }
+        const dur = d.duration;
+        log(`      ${C.dim}· ${dur.base}s default${dur.estimate ? ', content-aware' : ''}${dur.exact ? ', exact (skips pacing clamp)' : ''}` +
+            `${d.broll ? ` · bg ${d.broll.kind}` : ''}${C.x}`);
+        log();
+      }
+      if (!want) log(`${C.dim}  stingo blocks <name> for one · add your own with defineBlock() in a single file${C.x}`);
       break;
     }
 

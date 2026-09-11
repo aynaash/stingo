@@ -12,7 +12,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "docs:build": "bun run docs/build.ts",
     "docs:dev": "bun run docs/build.ts --serve",
-    "mcp": "bun run packages/mcp/bin/stingo-mcp.ts"
+    "mcp": "bun run packages/mcp/bin/stingo-mcp.ts",
+    "gallery": "bun run tools/gallery.ts",
+    "blockdocs": "bun run tools/blockdocs.ts",
+    "blockdocs:check": "bun run tools/blockdocs.ts --check"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

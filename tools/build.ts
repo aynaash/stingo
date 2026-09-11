@@ -28,6 +28,10 @@ const ENTRIES = {
   index: `${PKG}/src/index.ts`,
   cli: 'packages/cli/src/index.ts',
   mcp: 'packages/mcp/src/index.ts',
+  // A render spawns this as a separate process, so it must exist as a real file
+  // beside the CLI. Bundling the CLI alone leaves `stingo render` with nothing
+  // to spawn — the published package renders zero frames.
+  worker: 'packages/film/src/worker.ts',
 };
 
 /** Everything @stingo/* is inlined — none of those packages are published, so

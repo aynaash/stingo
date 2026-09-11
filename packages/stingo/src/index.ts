@@ -11,6 +11,14 @@
 // authoring
 export * from './build';
 
+// the extension point: a block is one defineBlock call, in one file, and
+// registering it is all the wiring there is
+export {
+  defineBlock, getBlock, hasBlock, blockNames, allBlocks, clearBlocks,
+  sceneSchema, parseScene, blockDuration, blockBroll, BASE_FIELDS,
+  type BlockDef, type BlockDuration, type DurationCtx, type BaseScene,
+} from '@stingo/schema';
+
 // documents and validation
 export {
   VideoDoc, Scene, TasteProfile, Broll, Canvas, Palette, Typography, Motion,

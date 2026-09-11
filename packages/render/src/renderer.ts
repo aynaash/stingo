@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadFonts, resolveFamily, type LoadedFont } from './fonts';
+import { metricsFor, type FontMetrics } from './measure';
 import type { El } from './h';
 
 export interface RendererOpts { width: number; height: number; fontDir?: string; fonts?: LoadedFont[] }
@@ -56,6 +57,18 @@ export class Renderer {
   }
 
   family(requested: string) { return resolveFamily(this.fonts, requested); }
+
+  /** Glyph metrics for a family, so text can be measured before it is drawn.
+   *  Weight matters: a bold face is wider, and fitting against the regular one
+   *  would let headlines overflow at exactly the sizes that matter most. */
+  metrics(requested: string, weight = 400): FontMetrics {
+    const family = resolveFamily(this.fonts, requested);
+    const exact = this.fonts.find((f) => f.name === family && f.weight === weight);
+    const nearest = exact ?? this.fonts
+      .filter((f) => f.name === family)
+      .sort((a, b) => Math.abs(a.weight - weight) - Math.abs(b.weight - weight))[0];
+    return metricsFor((nearest ?? this.fonts[0]!).data);
+  }
 
   /** Element tree → SVG string. Also the preview path, so preview is exact. */
   async toSvg(el: El): Promise<string> {

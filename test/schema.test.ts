@@ -1,4 +1,7 @@
 import { expect, test, describe } from 'bun:test';
+// parsing a document requires the block set: the Scene schema is composed from
+// whatever is registered, so importing the blocks is what makes them valid
+import '@stingo/blocks';
 import { TasteProfile, parseVideo, Broll, CANVAS_PRESETS } from '@stingo/schema';
 import { THEMES } from '@stingo/themes';
 

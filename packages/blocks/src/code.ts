@@ -5,6 +5,8 @@ import { typeStyle } from './ctx';
 import { T } from './stage';
 import { lifecycle, enterP, typed } from './anim';
 import { windowFrame } from './chrome';
+import { z } from 'zod';
+import { defineBlock } from './define';
 import { luminance, ensureContrast } from '@stingo/themes';
 
 /** Syntax colours ship tuned for their own theme's background. Against a
@@ -153,3 +155,45 @@ export function terminalBlock(s: any, c: BlockCtx): El {
     windowFrame(c, s.title ?? 'bash', body, { width: '100%', ...lifecycle(c.t, c.dur, c.taste, 'pop', 0) }),
   );
 }
+
+
+/* ── registration ───────────────────────────────────────────────────────── */
+
+defineBlock({
+  name: 'code',
+  describe: 'Syntax-highlighted source in a window frame, revealed line by line.',
+  fields: {
+    lang: z.string().default('ts'),
+    code: z.string().optional(),
+    file: z.string().optional(),
+    highlight: z.array(z.number().int()).default([]),
+    caption: z.string().optional(),
+    reveal: z.enum(['all', 'lines', 'typewriter']).default('lines'),
+  },
+  // long listings need proportionally longer on screen to be readable
+  duration: { base: 8, estimate: (s: any) => (s.code ? 1.8 + s.code.trim().split('\n').length * 0.42 : 8) },
+  broll: { kind: 'grid', opacity: 0.32 },
+  render: codeBlock,
+});
+
+defineBlock({
+  name: 'terminal',
+  describe: 'A shell session: commands type themselves in, output follows.',
+  fields: {
+    lines: z.array(z.object({
+      prompt: z.string().default('$'),
+      cmd: z.string().optional(),
+      out: z.string().optional(),
+      delay: z.number().default(0),
+    })),
+    title: z.string().default('bash'),
+  },
+  duration: {
+    base: 9,
+    // the scene has to outlast the typing animation it contains
+    estimate: (s: any) => 1.2 + s.lines.reduce(
+      (a: number, l: any) => a + (l.cmd ? 0.3 + l.cmd.length * 0.028 : 0) + (l.out ? 0.5 : 0.2), 0),
+  },
+  broll: { kind: 'codeRain', opacity: 0.22 },
+  render: terminalBlock,
+});

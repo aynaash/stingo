@@ -1,180 +1,530 @@
-A block is a scene type. Every one sizes itself from the stage, so the same
-script renders to any canvas shape without a second layout.
+A block is a kind of scene: a title card, a code window, a chart, a diagram.
+Fourteen ship with stingo, and adding a fifteenth is one file.
 
-All of them accept the [shared scene fields](script#scenes) — `dur`, `say`,
-`bg`, `camera`, and the rest.
-
-## title
-
-A kicker, a headline that animates in word by word, and an optional subtitle.
-
-```yaml
-- block: title
-  kicker: chapter one
-  text: Threads are expensive
-  sub: A megabyte each, reserved up front.
-  align: center        # or left
+```bash
+stingo blocks            # what is registered, with every field
+stingo blocks chart      # just one
 ```
 
-Words arriving individually is what makes a title feel authored rather than
-typeset. It is the single highest-leverage motion detail in the system.
+## The set
 
-## statement
+Every frame below is rendered from the real pipeline by
+`bun run tools/gallery.ts`, so the gallery cannot drift from what the code does.
 
-One line, large, with chosen words in the accent colour.
+<div class="gallery">
+  <figure><img src="../assets/img/block-title.webp" width="520" height="924" loading="lazy" decoding="async" alt="A headline with a kicker and subtitle."><figcaption>title</figcaption></figure>
+  <figure><img src="../assets/img/block-statement.webp" width="520" height="924" loading="lazy" decoding="async" alt="One sentence with a word picked out."><figcaption>statement</figcaption></figure>
+  <figure><img src="../assets/img/block-code.webp" width="520" height="924" loading="lazy" decoding="async" alt="Syntax-highlighted source, revealed line by line."><figcaption>code</figcaption></figure>
+  <figure><img src="../assets/img/block-terminal.webp" width="520" height="924" loading="lazy" decoding="async" alt="Commands that type themselves in, then output."><figcaption>terminal</figcaption></figure>
+  <figure><img src="../assets/img/block-diagram.webp" width="520" height="924" loading="lazy" decoding="async" alt="Boxes and arrows on an explicit grid."><figcaption>diagram</figcaption></figure>
+  <figure><img src="../assets/img/block-chart.webp" width="520" height="924" loading="lazy" decoding="async" alt="An animated bar or line chart."><figcaption>chart</figcaption></figure>
+  <figure><img src="../assets/img/block-stat.webp" width="520" height="924" loading="lazy" decoding="async" alt="One big number that counts up."><figcaption>stat</figcaption></figure>
+  <figure><img src="../assets/img/block-list.webp" width="520" height="924" loading="lazy" decoding="async" alt="Points that arrive one at a time."><figcaption>list</figcaption></figure>
+  <figure><img src="../assets/img/block-compare.webp" width="520" height="924" loading="lazy" decoding="async" alt="Two columns set against each other."><figcaption>compare</figcaption></figure>
+  <figure><img src="../assets/img/block-quote.webp" width="520" height="924" loading="lazy" decoding="async" alt="A pull quote with an attribution."><figcaption>quote</figcaption></figure>
+  <figure><img src="../assets/img/block-image.webp" width="520" height="924" loading="lazy" decoding="async" alt="A still, framed like a window."><figcaption>image</figcaption></figure>
+  <figure><img src="../assets/img/block-broll.webp" width="520" height="924" loading="lazy" decoding="async" alt="A breathing beat: background only."><figcaption>broll</figcaption></figure>
+  <figure><img src="../assets/img/block-camera.webp" width="520" height="924" loading="lazy" decoding="async" alt="A recorded take composited into the scene."><figcaption>camera</figcaption></figure>
+  <figure><img src="../assets/img/block-outro.webp" width="520" height="924" loading="lazy" decoding="async" alt="A closing card with a handle."><figcaption>outro</figcaption></figure>
+</div>
 
-```yaml
-- block: statement
-  text: Waiting is not working.
-  emphasis: [working.]
-```
+Captions are an overlay rather than a block — any scene with a `say` field gets
+them:
 
-`emphasis` matches whole words, punctuation included — write `working.` to
-catch the word with its full stop.
+<div class="gallery">
+  <figure><img src="../assets/img/block-captions.webp" width="520" height="924" loading="lazy" decoding="async" alt="Burned-in captions with the spoken word highlighted."><figcaption>captions</figcaption></figure>
+</div>
 
-## code
+## Every block
 
-![A code block with three highlighted lines](assets/img/block-code.webp)
+<!-- generated: blocks — bun run tools/blockdocs.ts -->
 
-```yaml
-- block: code
-  lang: go
-  caption: Send on one side, receive on the other.
-  highlight: [2, 3, 4]
-  reveal: lines        # all | lines | typewriter
-  code: |
-    ch := make(chan string)
-    go func() { ch <- "done" }()
-    msg := <-ch
-```
+### title
 
-Use `file: ./main.go` instead of `code:` to pull source from disk, so samples
-stay in step with code that actually compiles.
+A headline with an optional kicker and subtitle.
 
-Highlighted lines are 1-based. Highlighting is done by Shiki, so anything it
-supports works as a `lang`.
+<figure class="wide"><img src="../assets/img/block-title.webp" width="520" height="924" loading="lazy" decoding="async" alt="A headline with an optional kicker and subtitle."></figure>
 
-## terminal
+| field | type | default |
+|---|---|---|
+| `text` | `string` | **yes** |
+| `kicker` | `string` | — |
+| `sub` | `string` | — |
+| `align` | `left` \| `center` | `"center"` |
 
-![A terminal window with commands and their output](assets/img/block-terminal.webp)
-
-```yaml
-- block: terminal
-  title: bash
-  lines:
-    - { prompt: "$", cmd: "stingo beats track.mp3" }
-    - { out: "tempo      128.9 BPM (confidence 91%)" }
-    - { out: "downbeat   0.371s" }
-```
-
-Commands type in; output appears after them. `delay` on a line holds it back.
-
-## stat
-
-![A large figure with a label and a supporting line](assets/img/block-stat.webp)
+4.5s by default. Background defaults to `beams`.
 
 ```yaml
-- block: stat
-  value: "99%"
-  label: of a web request
-  sub: is spent waiting on something else.
-  countFrom: "0%"      # counts up on entry
+scenes:
+  - block: title
+    kicker: concurrency
+    text: Goroutines are not threads
+    sub: And that difference is the whole point.
 ```
 
-## list
+### statement
 
-![A titled list with arrow markers](assets/img/block-list.webp)
+One sentence, large, with optional words picked out in the accent.
+
+<figure class="wide"><img src="../assets/img/block-statement.webp" width="520" height="924" loading="lazy" decoding="async" alt="One sentence, large, with optional words picked out in the accent."></figure>
+
+| field | type | default |
+|---|---|---|
+| `text` | `string` | **yes** |
+| `emphasis` | array of `string` | `[]` |
+
+4s by default. Background defaults to `mesh`.
 
 ```yaml
-- block: list
-  title: Three ways to get hurt
-  marker: arrow        # num | dot | arrow | check
-  items:
-    - A goroutine nobody receives from leaks forever
-    - Unsynchronised writes are a race, not a visible bug
+scenes:
+  - block: statement
+    text: Waiting is not working.
+    emphasis: [ working. ]
 ```
 
-Items stagger in. Length is inferred from the item count, so a long list gets
-the time to be read.
+### code
 
-## chart
+Syntax-highlighted source in a window frame, revealed line by line.
+
+<figure class="wide"><img src="../assets/img/block-code.webp" width="520" height="924" loading="lazy" decoding="async" alt="Syntax-highlighted source in a window frame, revealed line by line."></figure>
+
+| field | type | default |
+|---|---|---|
+| `lang` | `string` | `"ts"` |
+| `code` | `string` | — |
+| `file` | `string` | — |
+| `highlight` | array of `number` | `[]` |
+| `caption` | `string` | — |
+| `reveal` | `all` \| `lines` \| `typewriter` | `"lines"` |
+
+8s by default, longer as the content grows. Background defaults to `grid`.
 
 ```yaml
-- block: chart
-  kind: bar            # bar | line
-  title: stack size at birth
-  unit: " KB"
-  highlightIndex: 1
-  data:
-    - { label: OS thread, value: 1024 }
-    - { label: goroutine, value: 2 }
+scenes:
+  - block: code
+    lang: go
+    code: |-
+      func main() {
+          ch := make(chan string)
+
+          go func() {
+              ch <- "done"
+          }()
+
+          fmt.Println(<-ch)
+      }
+    highlight: [ 4, 5 ]
+    caption: go starts it; the channel says when it finished.
 ```
 
-Bars grow from zero on entry; the highlighted index takes the accent colour.
-Paths are built with `d3-shape` and hand-written into the SVG.
+### terminal
 
-## compare
+A shell session: commands type themselves in, output follows.
+
+<figure class="wide"><img src="../assets/img/block-terminal.webp" width="520" height="924" loading="lazy" decoding="async" alt="A shell session: commands type themselves in, output follows."></figure>
+
+| field | type | default |
+|---|---|---|
+| `lines` | array of `{ prompt, cmd, out, delay }` | **yes** |
+| `title` | `string` | `"bash"` |
+
+9s by default, longer as the content grows. Background defaults to `codeRain`.
 
 ```yaml
-- block: compare
-  left:  { title: OS thread, items: ["1 MB stack", "Kernel schedules it"] }
-  right: { title: goroutine, items: ["2 KB stack", "Go runtime schedules it"] }
+scenes:
+  - block: terminal
+    title: bench
+    lines:
+      - prompt: $
+        cmd: go run serial.go
+        out: processed 200 jobs in 20.4s
+      - prompt: $
+        cmd: go run parallel.go
+        out: processed 200 jobs in 1.1s
 ```
 
-Two panels: side by side in landscape, stacked in portrait. The block does not
-decide which — the stage does.
+### diagram
 
-## quote
+Boxes and arrows on an explicit grid — architecture, data flow, state.
+
+<figure class="wide"><img src="../assets/img/block-diagram.webp" width="520" height="924" loading="lazy" decoding="async" alt="Boxes and arrows on an explicit grid — architecture, data flow, state."></figure>
+
+| field | type | default |
+|---|---|---|
+| `title` | `string` | — |
+| `nodes` | array of `{ id, label, at, kind, span, note, accent }` | **yes** |
+| `edges` | array of `{ from, to, label, style, bend, both, accent }` | `[]` |
+
+5s by default, longer as the content grows. Background defaults to `grid`.
 
 ```yaml
-- block: quote
-  text: Do not communicate by sharing memory; share memory by communicating.
-  attrib: Rob Pike
+scenes:
+  - block: diagram
+    title: fan out, fan in
+    nodes:
+      - id: main
+        label: main
+        at: [ 0, 0 ]
+        span: 2
+        accent: true
+      - id: w1
+        label: worker
+        at: [ 0, 1 ]
+      - id: w2
+        label: worker
+        at: [ 1, 1 ]
+      - id: ch
+        label: results chan
+        at: [ 0, 2 ]
+        span: 2
+        kind: queue
+    edges:
+      - from: main
+        to: w1
+        label: go
+      - from: main
+        to: w2
+        label: go
+      - from: w1
+        to: ch
+      - from: w2
+        to: ch
 ```
 
-## broll
+### chart
 
-A background with nothing on it but an optional caption. Useful as a beat of
-breathing room between chapters.
+An animated bar or line chart.
+
+<figure class="wide"><img src="../assets/img/block-chart.webp" width="520" height="924" loading="lazy" decoding="async" alt="An animated bar or line chart."></figure>
+
+| field | type | default |
+|---|---|---|
+| `kind` | `bar` \| `line` | `"bar"` |
+| `title` | `string` | — |
+| `data` | array of `{ label, value }` | **yes** |
+| `unit` | `string` | `""` |
+| `highlightIndex` | `number` | — |
+
+7s by default, longer as the content grows. Background defaults to `grid`.
 
 ```yaml
-- block: broll
-  caption: Same script. Three taste profiles.
-  bg: { kind: orbits, opacity: 0.75 }
+scenes:
+  - block: chart
+    kind: bar
+    title: 200 jobs, same machine
+    unit: s
+    data:
+      - label: serial
+        value: 20.4
+      - label: parallel
+        value: 1.1
+    highlightIndex: 1
 ```
 
-## camera
+### stat
 
-A recorded take. Covered in full on [talking head](camera).
+One big number that counts up, with a label.
+
+<figure class="wide"><img src="../assets/img/block-stat.webp" width="520" height="924" loading="lazy" decoding="async" alt="One big number that counts up, with a label."></figure>
+
+| field | type | default |
+|---|---|---|
+| `value` | `string` | **yes** |
+| `label` | `string` | **yes** |
+| `sub` | `string` | — |
+| `countFrom` | `string` | — |
+
+4.5s by default. Background defaults to `pulse`.
 
 ```yaml
-- block: camera
-  camera: { src: takes/01-hook.mp4, layout: full, scrim: 0.2 }
-  lower: { name: Hersi, role: hersietech.com }
-  caption: The hook, straight down the lens.
+scenes:
+  - block: stat
+    value: 18x
+    label: faster
+    sub: Same CPU. It simply stopped waiting in line.
 ```
 
-## outro
+### list
+
+Bulleted points that arrive one at a time.
+
+<figure class="wide"><img src="../assets/img/block-list.webp" width="520" height="924" loading="lazy" decoding="async" alt="Bulleted points that arrive one at a time."></figure>
+
+| field | type | default |
+|---|---|---|
+| `title` | `string` | — |
+| `items` | array of `string` | **yes** |
+| `marker` | `num` \| `dot` \| `arrow` \| `check` | `"arrow"` |
+
+7s by default, longer as the content grows. Background defaults to `dots`.
 
 ```yaml
-- block: outro
-  text: stingo
-  sub: Declarative video for people who ship content.
-  handle: github.com/aynaash/stingo
+scenes:
+  - block: list
+    title: Why Sleep fails
+    marker: arrow
+    items:
+      - You are guessing how long work takes
+      - Too short, and you drop results
+      - Too long, and you waste the speedup
+      - It will break on a slower machine
 ```
 
-## Adding your own
+### compare
 
-A block is a function from `(scene, ctx) → El`. Four things make one land:
+Two columns set against each other.
 
-1. **Size everything from `ctx.stage`**, never from raw pixels. That is what
-   makes it work in portrait, landscape, square, and inside a split-screen
-   panel, without knowing which it is in.
-2. **Use `T.*` for type sizes**, so it sits on the same modular scale as
-   everything else.
-3. **Animate with `lifecycle()`**, so the taste's motion personality applies.
-4. **Register it** in `blocks/src/registry.ts`, add it to the schema union in
-   `schema/src/video.ts`, and give it a `DEFAULT_DUR` entry in
-   `film/src/plan.ts`.
+<figure class="wide"><img src="../assets/img/block-compare.webp" width="520" height="924" loading="lazy" decoding="async" alt="Two columns set against each other."></figure>
 
-See [contributing](https://github.com/aynaash/stingo/blob/main/CONTRIBUTING.md).
+| field | type | default |
+|---|---|---|
+| `left` | object `{ title, items }` | **yes** |
+| `right` | object `{ title, items }` | **yes** |
+
+7.5s by default, longer as the content grows. Background defaults to `grid`.
+
+```yaml
+scenes:
+  - block: compare
+    left:
+      title: OS thread
+      items:
+        - 1 MB stack, reserved up front
+        - Kernel schedules it
+        - Thousands is a lot
+    right:
+      title: goroutine
+      items:
+        - 2 KB stack, grows on demand
+        - Go runtime schedules it
+        - Millions is fine
+```
+
+### quote
+
+A pull quote with an attribution.
+
+<figure class="wide"><img src="../assets/img/block-quote.webp" width="520" height="924" loading="lazy" decoding="async" alt="A pull quote with an attribution."></figure>
+
+| field | type | default |
+|---|---|---|
+| `text` | `string` | **yes** |
+| `attrib` | `string` | — |
+
+6s by default. Background defaults to `mesh`.
+
+```yaml
+scenes:
+  - block: quote
+    text: Do not communicate by sharing memory; share memory by communicating.
+    attrib: Rob Pike
+```
+
+### image
+
+A still — screenshot, photo or diagram — with an optional frame and caption.
+
+<figure class="wide"><img src="../assets/img/block-image.webp" width="520" height="924" loading="lazy" decoding="async" alt="A still — screenshot, photo or diagram — with an optional frame and caption."></figure>
+
+| field | type | default |
+|---|---|---|
+| `src` | `string` | **yes** |
+| `fit` | `contain` \| `cover` | `"contain"` |
+| `frame` | `none` \| `plain` \| `window` | `"plain"` |
+| `title` | `string` | — |
+| `kicker` | `string` | — |
+| `caption` | `string` | — |
+| `drift` | `number` | `0.05` |
+
+5s by default. Background defaults to `mesh`.
+
+```yaml
+scenes:
+  - block: image
+    src: ./diagram.png
+    frame: window
+    title: diagram.png
+    caption: A still, framed like a window.
+```
+
+### broll
+
+A breathing beat: background only, with an optional caption.
+
+<figure class="wide"><img src="../assets/img/block-broll.webp" width="520" height="924" loading="lazy" decoding="async" alt="A breathing beat: background only, with an optional caption."></figure>
+
+| field | type | default |
+|---|---|---|
+| `caption` | `string` | — |
+
+3.5s by default. Background defaults to `particles`.
+
+```yaml
+scenes:
+  - block: broll
+    caption: a breathing beat between sections
+    bg:
+      kind: particles
+      opacity: 0.8
+```
+
+### camera
+
+A recorded take composited into the scene — full frame, corner pip, or split.
+
+<figure class="wide"><img src="../assets/img/block-camera.webp" width="520" height="924" loading="lazy" decoding="async" alt="A recorded take composited into the scene — full frame, corner pip, or split."></figure>
+
+| field | type | default |
+|---|---|---|
+| `camera` | object `{ src, from, layout, fit, zoom, offsetX, offsetY, mirror, corner, size, aspect, shape, margin, side, ratio, ring, scrim, mute, gainDb }` | **yes** |
+| `caption` | `string` | — |
+| `lower` | object `{ name, role }` | — |
+
+8s by default, longer as the content grows, and exempt from the pacing clamp. Background defaults to `none`.
+
+```yaml
+scenes:
+  - block: camera
+    camera:
+      src: takes/01.mp4
+      layout: pip
+    lower:
+      name: Your name
+      role: the person explaining
+```
+
+### outro
+
+Closing card with a handle or call to action.
+
+<figure class="wide"><img src="../assets/img/block-outro.webp" width="520" height="924" loading="lazy" decoding="async" alt="Closing card with a handle or call to action."></figure>
+
+| field | type | default |
+|---|---|---|
+| `text` | `string` | **yes** |
+| `sub` | `string` | — |
+| `handle` | `string` | — |
+
+5s by default. Background defaults to `particles`.
+
+```yaml
+scenes:
+  - block: outro
+    text: Now go write something concurrent
+    sub: Then run it with -race.
+    handle: "@stingo"
+```
+
+<!-- /generated -->
+
+## Adding one
+
+A block declares its own fields, how long it wants to be on screen, what plays
+behind it, and how to draw itself. Importing the file is what registers it —
+there is no list to add yourself to, and nothing central to edit.
+
+```ts
+// packages/blocks/src/countdown.ts
+import { z } from 'zod';
+import { defineBlock } from './define';
+import { box, text } from '@stingo/render';
+import { typeStyle } from './ctx';
+import { T } from './stage';
+import { lifecycle } from './anim';
+
+export default defineBlock({
+  name: 'countdown',
+  describe: 'A number ticking down to zero.',
+
+  // block-specific fields. The base fields — id, dur, at, bg, enter, exit,
+  // say, camera, cut — are added for you.
+  fields: {
+    from: z.number().int().default(3),
+    label: z.string().optional(),
+  },
+
+  // base is a floor, not a fallback: a content estimate can push past it,
+  // narration replaces it, and the taste's pacing bounds clamp the result.
+  duration: { base: 4, estimate: (s) => 0.8 + s.from * 0.9 },
+
+  // what plays behind, when the scene does not say
+  broll: { kind: 'pulse', opacity: 0.5 },
+
+  render: (s, c) => {
+    const n = Math.max(0, s.from - Math.floor(c.t));
+    return box(
+      { width: c.stage.w, height: c.stage.h, flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: c.stage.unit },
+      text({ ...typeStyle(c, 'display', T.huge(c.stage), c.taste.palette.accent) }, String(n)),
+      s.label
+        ? text({ ...typeStyle(c, 'body', T.body(c.stage), c.taste.palette.muted),
+                 ...lifecycle(c.t, c.dur, c.taste, 'fade', 0.2) }, s.label)
+        : null,
+    );
+  },
+});
+```
+
+Add `import './countdown';` to `packages/blocks/src/registry.ts` so the built-in
+set picks it up, and it works everywhere at once — in YAML, in the planner, in
+the preview, in `stingo blocks`:
+
+```yaml
+- block: countdown
+  from: 5
+  label: until launch
+```
+
+## What `render` receives
+
+`render(scene, ctx)` is a **pure function of time**. It must not depend on any
+previous frame: `framePixels(4821)` is called without frame 4820 ever existing.
+That is what makes scrubbing, parallel rendering and deterministic output work.
+
+`scene` is your fields plus the base ones, already validated and defaulted.
+
+`ctx` carries:
+
+| | |
+|---|---|
+| `t` | seconds since this scene started |
+| `dur` | how long the scene runs |
+| `abs` | seconds since the film started |
+| `stage` | `w`, `h`, `unit`, `padX/padY`, `orientation` — size from these, never from raw pixels |
+| `taste` | the resolved profile: palette, type, motion, texture |
+| `grid` | the beat grid, for anything that should land on the music |
+| `index` | scene number, useful as a deterministic seed |
+
+Size everything from `stage.unit` and the `T.*` scale. That is what lets one
+composition render at 1080×1920 and 1920×1080 without a second layout.
+
+## A typed builder
+
+The YAML path works as soon as the block is registered. To use it from
+TypeScript, add a builder beside it:
+
+```ts
+class CountdownBuilder extends SceneBuilder<CountdownBuilder> {
+  label(v: string) { this.s.label = v; return this; }
+}
+export const countdown = (from: number) =>
+  new CountdownBuilder({ block: 'countdown', from });
+```
+
+```ts
+countdown(5).label('until launch').bg('pulse')
+```
+
+## Blocks from outside the repo
+
+`defineBlock` is exported from the package, so a block does not have to live
+here:
+
+```ts
+import { defineBlock } from 'stingo';
+export default defineBlock({ name: 'myblock', /* … */ });
+```
+
+Import it before you render, and the Scene schema, the planner and the
+compositor all pick it up. Names must be unique; registering an existing name
+replaces it, which is how you override a built-in.

@@ -149,6 +149,19 @@ scenes:
       }
     highlight: [4, 5, 6]
 
+  - block: diagram
+    title: fan out, fan in
+    nodes:
+      - { id: main, label: main, at: [0, 0], span: 2, accent: true }
+      - { id: w1, label: worker, at: [0, 1] }
+      - { id: w2, label: worker, at: [1, 1] }
+      - { id: ch, label: results chan, at: [0, 2], span: 2, kind: queue }
+    edges:
+      - { from: main, to: w1, label: go }
+      - { from: main, to: w2, label: go }
+      - { from: w1, to: ch }
+      - { from: w2, to: ch }
+
   - block: terminal
     title: bench
     lines:

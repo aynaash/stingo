@@ -1,4 +1,4 @@
-import { VideoDoc, Scene, Broll, CANVAS_PRESETS, type TasteProfile } from '@stingo/schema';
+import { VideoDoc, Scene, Broll, Camera, CANVAS_PRESETS, type TasteProfile } from '@stingo/schema';
 
 /** Code-first authoring. YAML is good for generated content; this is for when
  *  you want types, autocomplete, loops and real composition.
@@ -14,6 +14,7 @@ import { VideoDoc, Scene, Broll, CANVAS_PRESETS, type TasteProfile } from '@stin
 type TimeVal = number | string;
 type BrollKind = Broll['kind'];
 type AnimKind = 'fade'|'rise'|'fall'|'pop'|'slideL'|'slideR'|'wipe'|'typewriter'|'blur'|'none';
+type CameraOpts = Partial<Omit<Camera, 'src'>>;
 
 /** Shared scene options. Every block builder inherits these. */
 class SceneBuilder<Self extends SceneBuilder<any>> {
@@ -35,6 +36,18 @@ class SceneBuilder<Self extends SceneBuilder<any>> {
     this.s.bg = { kind, ...opts };
     return this.self();
   }
+  /** Composite a recorded take into this scene.
+   *
+   *      code('go', src).camera('takes/02.mp4', { layout: 'pip', corner: 'br' })
+   *
+   *  Works on every block, not just `camera()`. */
+  camera(src: string, opts: CameraOpts = {}) {
+    this.s.camera = { src, ...opts };
+    return this.self();
+  }
+  /** Override the taste's cut behaviour for this scene. */
+  cut(mode: 'free' | 'beat' | 'bar') { this.s.cut = mode; return this.self(); }
+
   enter(kind: AnimKind, opts: { delay?: number; dur?: number; ease?: string } = {}) {
     this.s.enter = { kind, ...opts };
     return this.self();
@@ -95,6 +108,43 @@ class QuoteBuilder extends SceneBuilder<QuoteBuilder> {
   by(v: string) { this.s.attrib = v; return this; }
 }
 class CompareBuilder extends SceneBuilder<CompareBuilder> {}
+export interface DiagramNode {
+  id: string; label: string; at: [number, number];
+  kind?: 'box' | 'store' | 'queue' | 'actor' | 'ghost';
+  span?: number; note?: string; accent?: boolean;
+}
+export interface DiagramEdge {
+  from: string; to: string; label?: string;
+  style?: 'solid' | 'dashed' | 'thick'; bend?: number; both?: boolean; accent?: boolean;
+}
+
+class DiagramBuilder extends SceneBuilder<DiagramBuilder> {
+  title(v: string) { this.s.title = v; return this; }
+  /** Add a node. Position is an explicit [column, row]. */
+  node(id: string, label: string, at: [number, number], opts: Partial<Omit<DiagramNode, 'id' | 'label' | 'at'>> = {}) {
+    this.s.nodes.push({ id, label, at, ...opts });
+    return this;
+  }
+  /** Connect two nodes by id. */
+  edge(from: string, to: string, opts: Partial<Omit<DiagramEdge, 'from' | 'to'>> = {}) {
+    this.s.edges.push({ from, to, ...opts });
+    return this;
+  }
+}
+
+class ImageBuilder extends SceneBuilder<ImageBuilder> {
+  caption(v: string) { this.s.caption = v; return this; }
+  kicker(v: string) { this.s.kicker = v; return this; }
+  /** Frame it like an app window, with a title bar. */
+  window(title?: string) { this.s.frame = 'window'; if (title) this.s.title = title; return this; }
+  plain() { this.s.frame = 'plain'; return this; }
+  bare() { this.s.frame = 'none'; return this; }
+  cover() { this.s.fit = 'cover'; return this; }
+  contain() { this.s.fit = 'contain'; return this; }
+  /** Slow push-in over the scene; 0 holds it still. */
+  drift(v: number) { this.s.drift = v; return this; }
+}
+
 class BrollBuilder extends SceneBuilder<BrollBuilder> {
   caption(v: string) { this.s.caption = v; return this; }
 }
@@ -115,8 +165,27 @@ export const compare = (
   left: { title: string; items: string[] },
   right: { title: string; items: string[] },
 ) => new CompareBuilder({ block: 'compare', left, right });
+export const image = (src: string) => new ImageBuilder({ block: 'image', src });
+export const diagram = (title?: string) =>
+  new DiagramBuilder({ block: 'diagram', nodes: [], edges: [], ...(title ? { title } : {}) });
 export const broll = (kind: BrollKind = 'particles') => new BrollBuilder({ block: 'broll', bg: { kind } });
 export const outro = (text: string) => new OutroBuilder({ block: 'outro', text });
+/** A scene that is a recorded take. `layout` defaults to filling the frame. */
+export const camera = (src: string, opts: CameraOpts = {}) =>
+  new CameraBuilder({ block: 'camera', camera: { src, ...opts } });
+
+class CameraBuilder extends SceneBuilder<CameraBuilder> {
+  /** A name card over the take. */
+  lower(name: string, role?: string) { this.s.lower = { name, ...(role ? { role } : {}) }; return this; }
+  caption(v: string) { this.s.caption = v; return this; }
+  /** Reframe within the box without re-shooting. */
+  frame(opts: { zoom?: number; offsetX?: number; offsetY?: number; mirror?: boolean }) {
+    this.s.camera = { ...this.s.camera, ...opts };
+    return this;
+  }
+  /** In-point within the take, so one recording can feed several scenes. */
+  from(v: number | string) { this.s.camera = { ...this.s.camera, from: v }; return this; }
+}
 
 export type AnyScene = SceneBuilder<any> | Scene;
 const toScene = (s: AnyScene): Scene => (s instanceof SceneBuilder ? s.toScene() : Scene.parse(s));

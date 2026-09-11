@@ -7,6 +7,8 @@ import { typeStyle } from './ctx';
 import { T } from './stage';
 import { lifecycle, enterP, animStyle } from './anim';
 import { kicker } from './chrome';
+import { z } from 'zod';
+import { defineBlock } from './define';
 
 const svgUri = (svg: string) => `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 
@@ -30,12 +32,19 @@ export function statBlock(s: any, c: BlockCtx): El {
   const p = enterP(c.t, c.taste, 0.1, 0.9);
   return box({ width: st.w, height: st.h, flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
       padding: `${st.padY}px ${st.padX}px`, gap: st.unit * 0.5 },
+    // a stat's value is the point of the scene; wrapping it would be worse than
+    // shrinking it, and overflowing it worse than either. countUp can widen the
+    // string mid-animation ("7" → "18x"), so fit against the final value.
     text({
-      ...typeStyle(c, 'display', T.huge(st), palette.accent),
+      ...typeStyle(c, 'display', c.fit(String(s.value), 'display', T.huge(st), {
+        maxWidth: st.contentW, wrap: false, floor: 0.3,
+      }).size, palette.accent),
       ...animStyle('pop', enterP(c.t, c.taste, 0), c.taste),
       textAlign: 'center',
     }, countUp(s.value, p)),
-    text({ ...typeStyle(c, 'display', T.heading(st), palette.text),
+    text({ ...typeStyle(c, 'display', c.fit(s.label, 'display', T.heading(st), {
+        maxWidth: st.contentW, maxHeight: st.unit * 3.2,
+      }).size, palette.text),
       ...lifecycle(c.t, c.dur, c.taste, 'rise', 0.28), textAlign: 'center' }, s.label),
     s.sub ? text({ ...typeStyle(c, 'body', T.body(st), palette.muted),
       ...lifecycle(c.t, c.dur, c.taste, 'fade', 0.5), textAlign: 'center', maxWidth: st.contentW * 0.8 }, s.sub) : null,
@@ -149,3 +158,47 @@ export function compareBlock(s: any, c: BlockCtx): El {
     ),
   );
 }
+
+
+/* ── registration ───────────────────────────────────────────────────────── */
+
+defineBlock({
+  name: 'stat',
+  describe: 'One big number that counts up, with a label.',
+  fields: {
+    value: z.string(),
+    label: z.string(),
+    sub: z.string().optional(),
+    countFrom: z.string().optional(),
+  },
+  duration: { base: 4.5 },
+  broll: { kind: 'pulse', opacity: 0.5 },
+  render: statBlock,
+});
+
+defineBlock({
+  name: 'chart',
+  describe: 'An animated bar or line chart.',
+  fields: {
+    kind: z.enum(['bar', 'line']).default('bar'),
+    title: z.string().optional(),
+    data: z.array(z.object({ label: z.string(), value: z.number() })),
+    unit: z.string().default(''),
+    highlightIndex: z.number().int().optional(),
+  },
+  duration: { base: 7, estimate: (s: any) => 2.2 + s.data.length * 0.55 },
+  broll: { kind: 'grid', opacity: 0.3 },
+  render: chartBlock,
+});
+
+defineBlock({
+  name: 'compare',
+  describe: 'Two columns set against each other.',
+  fields: {
+    left: z.object({ title: z.string(), items: z.array(z.string()) }),
+    right: z.object({ title: z.string(), items: z.array(z.string()) }),
+  },
+  duration: { base: 7.5, estimate: (s: any) => 2 + (s.left.items.length + s.right.items.length) * 0.55 },
+  broll: { kind: 'grid', opacity: 0.28 },
+  render: compareBlock,
+});

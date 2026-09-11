@@ -1,4 +1,5 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { spawn } from 'bun';
 import { Film } from './film';
@@ -31,6 +32,23 @@ export interface RenderResult { file: string; frames: number; duration: number; 
 
 /** Render the whole film. Splits frames across processes, each producing its own
  *  MP4 segment, then concatenates with stream copy (no re-encode). */
+/** Find the worker script for whichever layout we are running in.
+ *
+ *  From source it sits beside this file as worker.ts; from the published
+ *  bundle it is dist/worker.js beside dist/cli.js. Assuming either one breaks
+ *  the other, and the bundled case breaks silently at spawn time. */
+function resolveWorker(): string {
+  const here = new URL('./', import.meta.url);
+  for (const name of ['worker.ts', 'worker.js']) {
+    const p = new URL(name, here).pathname;
+    if (existsSync(p)) return p;
+  }
+  throw new Error(
+    `could not find the render worker beside ${here.pathname} — ` +
+    'if this is an installed copy, the package was built without its worker entry point',
+  );
+}
+
 export async function renderVideo(opts: RenderOpts): Promise<RenderResult> {
   const t0 = Date.now();
   const grid = opts.grid ?? DEFAULT_GRID;
@@ -55,7 +73,7 @@ export async function renderVideo(opts: RenderOpts): Promise<RenderResult> {
     out: resolve(join(work, `seg-${String(i).padStart(3, '0')}.mp4`)),
   })).filter((j) => j.end > j.start);
 
-  const workerScript = new URL('./worker.ts', import.meta.url).pathname;
+  const workerScript = resolveWorker();
   const progress = new Array(jobs.length).fill(0);
   let lastReport = 0;
 

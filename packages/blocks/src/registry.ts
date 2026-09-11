@@ -1,28 +1,26 @@
-import type { Scene } from '@stingo/schema';
+import { getBlock, blockNames, allBlocks, type Scene } from '@stingo/schema';
 import type { BlockCtx } from './ctx';
 import type { El } from '@stingo/render';
-import { titleBlock, statementBlock, quoteBlock, listBlock, outroBlock, brollBlock } from './text';
-import { codeBlock, terminalBlock } from './code';
-import { statBlock, chartBlock, compareBlock } from './data';
-import { cameraBlock } from './camera';
 
-export const BLOCKS: Record<Scene['block'], (s: any, c: BlockCtx) => El> = {
-  title: titleBlock,
-  statement: statementBlock,
-  quote: quoteBlock,
-  list: listBlock,
-  outro: outroBlock,
-  broll: brollBlock,
-  code: codeBlock,
-  terminal: terminalBlock,
-  stat: statBlock,
-  chart: chartBlock,
-  compare: compareBlock,
-  camera: cameraBlock,
-};
+/** Importing a block module registers it. This file exists only to make sure
+ *  the built-in set is loaded — there is no table here to keep in sync. */
+import './text';
+import './code';
+import './data';
+import './camera';
+import './diagram';
+import './image';
 
 export function renderBlock(scene: Scene, ctx: BlockCtx): El {
-  const fn = BLOCKS[scene.block];
-  if (!fn) throw new Error(`unknown block: ${(scene as any).block}`);
-  return fn(scene, ctx);
+  const def = getBlock(scene.block);
+  if (!def) {
+    throw new Error(`unknown block "${scene.block}" — registered blocks are: ${blockNames().join(', ')}`);
+  }
+  return def.render(scene, ctx) as El;
 }
+
+/** Kept for callers that want the map shape; derived, never hand-written. */
+export const BLOCKS: Record<string, (s: any, c: BlockCtx) => El> =
+  Object.fromEntries(allBlocks().map((d) => [d.name, d.render as (s: any, c: BlockCtx) => El]));
+
+export { blockNames, allBlocks, getBlock };

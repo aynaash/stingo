@@ -17,8 +17,9 @@ worth doing.
 ## Where it is now — v0.1
 
 - Scripts in YAML, JSON or typed TypeScript
-- Twelve blocks: title, statement, code, terminal, stat, list, chart, quote,
-  compare, broll, camera, outro
+- Fourteen blocks: title, statement, code, terminal, stat, list, chart, diagram,
+  image, quote, compare, broll, camera, outro — and adding one is a single file,
+  `defineBlock`, with no central list to edit
 - Taste profiles: palette, type, motion, pacing, texture — derivable from one
   brand colour, with contrast floors enforced
 - Beat detection, with cuts snapped to bars
@@ -28,9 +29,11 @@ worth doing.
 
 ## Now — finishing what is started
 
-**Captions.** The schema has a `captions` field that nothing reads yet. Word-level
-timing from the narration track, burned in or as a sidecar `.srt`. Non-negotiable
-for shorts, where most viewing is muted.
+**Captions.** ~~The schema has a `captions` field that nothing reads yet.~~ Done:
+word-level timing estimated from each scene's `say`, burned in above the platform
+safe area with the spoken word picked out, plus `.srt` and `.vtt` sidecars
+written beside the video. Still estimated rather than force-aligned — against a
+recorded take it will drift, which is what **Voice** below fixes.
 
 **Voice.** `say:` already drives scene length. It should also be able to *become*
 the narration, through a TTS provider you choose, so a script with no recorded
@@ -67,8 +70,10 @@ tutorial is worse than no tutorial.
 file that has changed, or a terminal block's real output no longer matches.
 Video that rots silently is the reason most engineering teams stop making it.
 
-**Diagrams.** Boxes, arrows, sequence and architecture diagrams that animate,
-laid out from a declaration rather than positioned by hand.
+**Diagrams.** ~~Boxes, arrows, sequence and architecture diagrams that animate.~~
+Done for architecture and data-flow: the `diagram` block places nodes on an
+explicit grid and draws arrows between them. Sequence diagrams, and layout solved
+from the declaration rather than stated, are still open.
 
 ## Then — one source, every surface
 

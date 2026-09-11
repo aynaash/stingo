@@ -105,9 +105,11 @@ ${topbar(base)}
   profile, with every cut on a downbeat. No footage, no timeline, no editor.</p>
   <figure class="demo">
     <video src="${u('assets/video/demo.mp4')}" poster="${u('assets/img/demo-poster.webp')}"
-           autoplay muted loop playsinline preload="metadata"
-           aria-label="Twenty-six seconds of a rendered stingo film: titles animating word by word, a statistic, and a two-column comparison."></video>
-    <figcaption>26 seconds, silent. <a href="${GITHUB}/releases/latest">Download the full film with sound</a>, vertical or horizontal.</figcaption>
+           autoplay muted loop playsinline controls preload="metadata"
+           aria-label="A rendered stingo film: titles animating word by word, a diagram drawing itself, a chart, and a statistic — cut to a 128 BPM track."></video>
+    <figcaption>Rendered by <code>bun run gallery</code>, music and all — <b>unmute it</b>, every
+    cut lands on a downbeat. Browsers only autoplay muted, so it starts silent.
+    <a href="${GITHUB}/releases/latest">The full film</a>, vertical or horizontal.</figcaption>
   </figure>
 </section>
 
@@ -192,14 +194,26 @@ ${topbar(base)}
 </section>
 
 <section class="section wide">
-  <h2>Twelve blocks, one type scale</h2>
+  <h2>Fourteen blocks, one type scale</h2>
   <p>Each block sizes itself from the stage, so the same script renders to
-  1080×1920, 1920×1080 or square without a second layout.</p>
+  1080×1920, 1920×1080 or square without a second layout. Every frame below is
+  rendered by <code>bun run tools/gallery.ts</code> from the real pipeline, so
+  the gallery cannot drift from what the code does.</p>
   <div class="gallery">
+    <figure><img src="${u('assets/img/block-title.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A headline with a kicker and subtitle."><figcaption>title</figcaption></figure>
     <figure><img src="${u('assets/img/block-code.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A code block with highlighted lines."><figcaption>code</figcaption></figure>
+    <figure><img src="${u('assets/img/block-diagram.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="Boxes and arrows on an explicit grid."><figcaption>diagram</figcaption></figure>
+    <figure><img src="${u('assets/img/block-terminal.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A terminal window with commands and output."><figcaption>terminal</figcaption></figure>
+    <figure><img src="${u('assets/img/block-chart.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="An animated bar chart."><figcaption>chart</figcaption></figure>
     <figure><img src="${u('assets/img/block-stat.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A large statistic with a label."><figcaption>stat</figcaption></figure>
     <figure><img src="${u('assets/img/block-list.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A titled list with arrow markers."><figcaption>list</figcaption></figure>
-    <figure><img src="${u('assets/img/block-terminal.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A terminal window with commands and output."><figcaption>terminal</figcaption></figure>
+    <figure><img src="${u('assets/img/block-compare.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="Two columns set against each other."><figcaption>compare</figcaption></figure>
+    <figure><img src="${u('assets/img/block-statement.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="One sentence with a word picked out."><figcaption>statement</figcaption></figure>
+    <figure><img src="${u('assets/img/block-quote.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A pull quote with an attribution."><figcaption>quote</figcaption></figure>
+    <figure><img src="${u('assets/img/block-image.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A screenshot framed like a window."><figcaption>image</figcaption></figure>
+    <figure><img src="${u('assets/img/block-captions.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="Burned-in captions with the spoken word highlighted."><figcaption>captions</figcaption></figure>
+    <figure><img src="${u('assets/img/block-camera.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A recorded take composited into the scene."><figcaption>camera</figcaption></figure>
+    <figure><img src="${u('assets/img/block-outro.webp')}" width="520" height="924" loading="lazy" decoding="async" alt="A closing card with a handle."><figcaption>outro</figcaption></figure>
   </div>
 </section>
 

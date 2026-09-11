@@ -210,7 +210,10 @@ the beat grid. Set `dur` to override, in seconds (`4s`), beats (`8b`) or bars
 ## Blocks
 
 `title` · `statement` · `code` · `terminal` · `stat` · `list` · `chart` ·
-`quote` · `compare` · `broll` · `camera` · `outro`
+`diagram` · `image` · `quote` · `compare` · `broll` · `camera` · `outro`
+
+`stingo blocks` lists them with every field. A block is one `defineBlock` call in
+one file, with no central list to edit — see the Blocks page in the docs.
 
 ## B-roll
 
@@ -248,6 +251,12 @@ mattered, in order:
 3. **No full-frame SVG filters.** `feGaussianBlur` over 2 MP costs ~9.5 s and
    `feTurbulence` ~1.5 s. Glow became analytic radial gradients; grain and
    vignette moved to a precomputed LUT applied to the pixel buffer (~20 ms).
+
+One thing is still slow on purpose: an `image` scene costs ~350ms a frame
+against ~33ms for text, because resvg resamples the bitmap into the canvas on
+every frame. Compositing decoded pixels the way camera takes already are would
+fix it; until then, a few image scenes cost a few seconds and a film made mostly
+of images will be slow.
 
 Throughput comes from process parallelism: frames are split into contiguous
 ranges, each worker encodes its own MP4 segment, and segments are concatenated

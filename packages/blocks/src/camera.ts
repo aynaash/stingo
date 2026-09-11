@@ -1,10 +1,13 @@
 import { box, text, type El } from '@stingo/render';
 import { clamp, interpolate } from '@stingo/core';
-import type { Camera, TasteProfile } from '@stingo/schema';
+import type { TasteProfile } from '@stingo/schema';
 import type { BlockCtx } from './ctx';
 import { typeStyle } from './ctx';
 import { T, type Stage } from './stage';
 import { lifecycle, enterP } from './anim';
+import { z } from 'zod';
+import { defineBlock } from './define';
+import { Camera } from '@stingo/schema';
 
 /** Where a take lands in the frame, in canvas pixels. */
 export interface Placement {
@@ -146,3 +149,29 @@ function hexA(hex: string, a: number): string {
   const v = parseInt(n, 16);
   return `rgba(${(v >> 16) & 255}, ${(v >> 8) & 255}, ${v & 255}, ${a.toFixed(3)})`;
 }
+
+
+/* ── registration ───────────────────────────────────────────────────────── */
+
+defineBlock({
+  name: 'camera',
+  describe: 'A recorded take composited into the scene — full frame, corner pip, or split.',
+  fields: {
+    camera: Camera,
+    caption: z.string().optional(),
+    lower: z.object({ name: z.string(), role: z.string().optional() }).optional(),
+  },
+  duration: {
+    base: 8,
+    // a talking-head scene runs as long as the take does
+    exact: true,
+    estimate: (s: any, ctx) => {
+      const len = ctx.clips?.get(s.camera.src);
+      if (len == null) return null;
+      const remaining = len - ctx.seconds(s.camera.from, 0);
+      return remaining > 0.05 ? remaining : null;
+    },
+  },
+  broll: { kind: 'none', opacity: 0 },
+  render: cameraBlock,
+});

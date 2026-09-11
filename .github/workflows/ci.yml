@@ -48,6 +48,12 @@ jobs:
       - name: Test
         run: bun test
 
+      # The block reference in the docs is generated from the registry. If a
+      # block gained a field and nobody regenerated, the docs are lying — catch
+      # it here rather than letting the page drift.
+      - name: Block reference is current
+        run: bun run tools/blockdocs.ts --check
+
   render:
     name: render end to end
     runs-on: ubuntu-latest

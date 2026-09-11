@@ -349,3 +349,30 @@ describe('VideoSource', () => {
     await s.close();
   });
 });
+
+describe('builder', () => {
+  test('camera() makes a camera scene', async () => {
+    const { film, camera } = await import('stingo');
+    const doc = film('t').add(camera('take.mp4', { layout: 'full' }).lower('Hersi', 'building stingo')).toDoc();
+    expect(doc.scenes[0]).toMatchObject({ block: 'camera', lower: { name: 'Hersi', role: 'building stingo' } });
+    expect(doc.scenes[0]!.camera?.src).toBe('take.mp4');
+  });
+
+  test('.camera() composites a take onto any other block', async () => {
+    const { film, code } = await import('stingo');
+    const doc = film('t').add(code('go', 'x := 1').camera('take.mp4', { layout: 'pip', corner: 'tl' })).toDoc();
+    expect(doc.scenes[0]!.block).toBe('code');
+    expect(doc.scenes[0]!.camera).toMatchObject({ layout: 'pip', corner: 'tl' });
+  });
+
+  test('.from() and .frame() reframe without dropping the source', async () => {
+    const { film, camera } = await import('stingo');
+    const doc = film('t').add(camera('take.mp4').from('8b').frame({ zoom: 1.4, mirror: true })).toDoc();
+    expect(doc.scenes[0]!.camera).toMatchObject({ src: 'take.mp4', from: '8b', zoom: 1.4, mirror: true });
+  });
+
+  test('.cut() overrides the taste snapping', async () => {
+    const { film, camera } = await import('stingo');
+    expect(film('t').add(camera('a.mp4').cut('bar')).toDoc().scenes[0]!.cut).toBe('bar');
+  });
+});

@@ -8,3 +8,8 @@ export * from './code';
 export * from './data';
 export * from './registry';
 export * from './camera';
+export * from './diagram';
+export * from './image';
+export * from './imageinfo';
+export * from './captionlayer';
+export * from './artdirect';

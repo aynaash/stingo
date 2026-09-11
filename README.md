@@ -1,8 +1,21 @@
 # stingo
 
+[![ci](https://github.com/aynaash/stingo/actions/workflows/ci.yml/badge.svg)](https://github.com/aynaash/stingo/actions/workflows/ci.yml)
+[![docs](https://img.shields.io/badge/docs-aynaash.github.io%2Fstingo-ef7e39)](https://aynaash.github.io/stingo/)
+[![licence](https://img.shields.io/badge/licence-AGPL--3.0-ef7e39)](./LICENSE)
+[![built by Claude](https://img.shields.io/badge/built%20by-Claude-d97757)](#who-wrote-this)
+
 Declarative video for people who ship content. Write a YAML script, point it at a
 taste profile, get a rendered MP4 — vertical or horizontal, with cuts that land on
 the beat.
+
+**[Documentation](https://aynaash.github.io/stingo/)** ·
+**[Watch what it makes](https://aynaash.github.io/stingo/#what-comes-out)** ·
+**[Roadmap](./ROADMAP.md)**
+
+*Stingo* is Sheng — the Swahili-English creole spoken in Nairobi — for
+**aesthetics**. Which is the whole idea: the look of a film is a thing you can
+name, keep in its own file, and swap. Your script never mentions a colour.
 
 ```bash
 bun add stingo          # library + `stingo` CLI
@@ -300,6 +313,44 @@ Each render worker runs its own decoder alongside its own encoder. That sounds
 like oversubscription, and it measures as the opposite — 45 s, 49 s and 65 s for
 8, 4 and 2 workers on an 8-thread laptop — because ffmpeg spends enough time
 blocked on IO to leave room. So the default stays one worker per thread.
+
+## Where this is going
+
+The goal is the complete technical content library for engineers: everything
+between having something to explain and having published it, expressible as
+code, reviewable as a diff, reproducible on a build server.
+
+Next up is captions and narration, then blocks that read your repository — a
+`diff` block that renders a real commit, a terminal block that runs the command
+rather than quoting what you remember it printing, and `stingo check` in CI to
+fail the build when a video's code no longer matches the code.
+
+[ROADMAP.md](./ROADMAP.md) has the ordering, and what is explicitly not being
+built.
+
+## Who wrote this
+
+**This project is written and maintained entirely by Claude** — Anthropic's
+Claude Code — working from direction by [Hersi](https://github.com/aynaash).
+Every line of source, every test, every page of these docs, and the launch
+video's script were produced by the model. Hersi decides what it should do and
+what "good" means; Claude does the building.
+
+That is not a disclaimer, it is the interesting part. A few things it is worth
+being precise about:
+
+- **The measurements are real.** Where the docs claim 7× or 585 ms → 33 ms,
+  those were measured on the machine, and at least one "optimisation" was
+  reverted when a clean re-measurement showed it made things slower.
+- **The tests are real.** CI typechecks and runs the suite on Linux and macOS
+  with ffmpeg installed, then plans every example and renders stills and a clip
+  end to end.
+- **It is still software with bugs in it.** Being model-written makes it
+  neither more nor less trustworthy than any other young project. Read the code,
+  and open an issue when it renders something wrong.
+
+The commit history carries session links, so you can see how each change was
+arrived at.
 
 ## Requirements
 

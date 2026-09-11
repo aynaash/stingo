@@ -11,9 +11,11 @@
     "watch": "bun run tools/watch.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "docs:build": "bun run docs/build.ts",
-    "docs:dev": "bun run docs/build.ts --serve"
+    "docs:dev": "bun run docs/build.ts --serve",
+    "mcp": "bun run packages/mcp/bin/stingo-mcp.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@resvg/resvg-js": "^2.6.2",
     "@stingo/audio": "workspace:*",
     "@stingo/blocks": "workspace:*",
@@ -30,9 +32,10 @@
     "d3-shape": "^3.2.0",
     "satori": "^0.33.4",
     "shiki": "^4.4.3",
+    "stingo": "workspace:*",
     "yaml": "^2.9.0",
     "zod": "^4.6.2",
-    "stingo": "workspace:*"
+    "@stingo/mcp": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

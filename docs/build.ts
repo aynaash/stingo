@@ -16,7 +16,7 @@ import { marked } from 'marked';
 import { mkdir, rm, cp, readdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { createHighlighter } from 'shiki';
-import { PAGES, type Page } from './nav';
+import { PAGES, SECTIONS, type Page } from './nav';
 import { landing } from './landing';
 import { shell, url as mkUrl } from './shell';
 
@@ -122,15 +122,90 @@ async function build() {
     await Bun.write(join(dir, 'index.html'), html);
   }
 
+  await writeForMachines(DIST, BASE);
+
   await cp(join(ROOT, 'assets'), join(DIST, 'assets'), { recursive: true });
 
   // Pages would otherwise run the output through Jekyll, which strips
   // directories beginning with an underscore and can rewrite files
   await Bun.write(join(DIST, '.nojekyll'), '');
-  await Bun.write(join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\n`);
+  await Bun.write(join(DIST, 'robots.txt'),
+    `User-agent: *\nAllow: /\n\n# machine-readable documentation\n# ${'https://aynaash.github.io/stingo'}/llms.txt\n`);
 
   const files = await count(DIST);
   console.log(`docs → ${DIST}  (${files} files, base "${BASE || '/'}")`);
+}
+
+/** Machine-readable copies of the documentation.
+ *
+ *  A rendered page is a poor thing to hand a language model: the shell, the
+ *  sidebar and the syntax spans are noise, and the prose is what matters. So
+ *  every page is also published as the markdown it was written in, alongside
+ *  the llms.txt convention — an index at /llms.txt and the whole corpus
+ *  inlined at /llms-full.txt.
+ *
+ *  This costs almost nothing and means an agent asked "how do I put a talking
+ *  head in a stingo video" can fetch one file and have the real answer rather
+ *  than a scrape of HTML. */
+async function writeForMachines(dist: string, base: string) {
+  const site = 'https://aynaash.github.io/stingo';
+  const abs = (p: string) => `${site}${mkUrl(base, p).replace(base || '/', '/')}`.replace(/([^:])\/{2,}/g, '$1/');
+
+  const pages = await Promise.all(PAGES.map(async (page) => ({
+    page,
+    md: await Bun.file(join(ROOT, 'content', `${page.slug}.md`)).text(),
+  })));
+
+  // one .md next to each .html, so /camera and /camera.md are the same page
+  for (const { page, md } of pages) {
+    const body = `# ${page.title}\n\n> ${page.blurb}\n\n${md.trim()}\n`;
+    await Bun.write(join(dist, `${page.slug}.md`), body);
+    await Bun.write(join(dist, page.slug, 'index.md'), body);
+  }
+
+  const bySection = SECTIONS.map((section) => {
+    const rows = pages.filter((x) => x.page.section === section)
+      .map(({ page }) => `- [${page.title}](${abs(page.slug + '.md')}): ${page.blurb}`);
+    return `## ${section}\n\n${rows.join('\n')}`;
+  }).join('\n\n');
+
+  const index = `# stingo
+
+> Declarative video for people who ship content. A video is a text file: a
+> script says what you are talking about, a taste profile says how it looks and
+> moves, and stingo renders an MP4 with every cut landing on a downbeat. It
+> also composites recorded takes, so an explainer can contain the explainer.
+
+"Stingo" is Sheng — the Swahili-English creole spoken in Nairobi — for
+*aesthetics*, which is the central idea: the look of a film is a named thing
+that lives in its own file and can be swapped without touching the script.
+
+stingo is a Bun and TypeScript library and CLI. It renders with satori and
+resvg (no browser, no headless Chrome) and encodes with ffmpeg. A frame is a
+pure function of its index, which is what makes scrubbing instant, rendering
+parallel, and output deterministic.
+
+The project is written and maintained entirely by Claude, Anthropic's coding
+model, working from direction by Hersi (github.com/aynaash).
+
+Every page below is also served as HTML at the same path without the .md.
+
+${bySection}
+
+## Also
+
+- [Source](https://github.com/aynaash/stingo): the repository, AGPL-3.0
+- [Everything, inlined](${abs('llms-full.txt')}): all documentation in one file
+- [The launch video script](https://github.com/aynaash/stingo/tree/main/examples/building-stingo): a worked example written before its footage existed
+`;
+  await Bun.write(join(dist, 'llms.txt'), index);
+
+  const full = [
+    index.slice(0, index.indexOf('## ')).trimEnd(),
+    ...pages.map(({ page, md }) =>
+      `\n\n---\n\n# ${page.title}\n\n> ${page.blurb}\n> Source: ${abs(page.slug + '.md')}\n\n${md.trim()}`),
+  ].join('');
+  await Bun.write(join(dist, 'llms-full.txt'), full + '\n');
 }
 
 async function count(dir: string): Promise<number> {

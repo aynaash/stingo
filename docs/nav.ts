@@ -45,9 +45,21 @@ export const PAGES: Page[] = [
     section: 'Reference',
   },
   {
+    slug: 'mcp',
+    title: 'Agents and MCP',
+    blurb: 'Let a model write a script, render a frame, and actually look at it.',
+    section: 'Reference',
+  },
+  {
     slug: 'internals',
     title: 'How it works',
     blurb: 'Pure frames, satori and resvg, the beat grid, and where the milliseconds went.',
+    section: 'Under the hood',
+  },
+  {
+    slug: 'roadmap',
+    title: 'Roadmap',
+    blurb: 'Where this is going: the complete technical content library for engineers.',
     section: 'Under the hood',
   },
 ];

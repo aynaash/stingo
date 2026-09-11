@@ -37,6 +37,9 @@ ${topbar(base)}
   <h1>A video is a text file.</h1>
   <p class="lede">Write the script. Pick a taste. Render an MP4 — vertical or
   horizontal, with every cut landing on a downbeat.</p>
+  <p class="etymology"><b>Stingo</b> is Sheng, the Swahili-English creole spoken
+  in Nairobi, for <b>aesthetics</b>. Which is the idea: the look of a film is a
+  thing you can name, keep in its own file, and swap.</p>
   <div class="cta">
     <a class="btn btn-fill" href="${u('start')}">Get started</a>
     <a class="btn btn-line" href="${GITHUB}" target="_blank" rel="noopener">Source on GitHub</a>
@@ -56,6 +59,19 @@ ${topbar(base)}
 </section>
 
 <div class="wide"><div class="ruler" aria-hidden="true"></div></div>
+
+<section class="section wide">
+  <h2>What comes out</h2>
+  <p>The opening of <a href="https://github.com/aynaash/stingo/tree/main/examples/goroutines">the example film</a> —
+  five minutes of vertical and horizontal video from one script and one taste
+  profile, with every cut on a downbeat. No footage, no timeline, no editor.</p>
+  <figure class="demo">
+    <video src="${u('assets/video/demo.mp4')}" poster="${u('assets/img/demo-poster.webp')}"
+           autoplay muted loop playsinline preload="metadata"
+           aria-label="Twenty-six seconds of a rendered stingo film: titles animating word by word, a statistic, and a two-column comparison."></video>
+    <figcaption>26 seconds, silent. <a href="https://github.com/aynaash/stingo/releases/latest">Download the full film with sound</a>, vertical or horizontal.</figcaption>
+  </figure>
+</section>
 
 <section class="section wide">
   <h2>Change the taste, not the script</h2>
@@ -152,6 +168,34 @@ ${topbar(base)}
       <p>Point it at a track and the beat grid is detected — spectral-flux
       onsets, autocorrelation tempo with a log-normal prior so it does not pick
       half or double time. Scene ends snap to bars, so every cut is a downbeat.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section wrap">
+  <h2>Written by Claude, start to finish</h2>
+  <p>Every line of stingo — the renderer, the beat detection, the tests, this
+  page — was written by Claude, Anthropic's coding model, working from
+  direction by <a href="https://github.com/aynaash" target="_blank" rel="noopener">Hersi</a>.
+  Hersi decides what it should do and what good means; Claude does the building.</p>
+  <div class="claims">
+    <div>
+      <h3>The measurements are real</h3>
+      <p>585&nbsp;ms to 33&nbsp;ms a frame, and 7× on the decode path, were
+      measured on the machine — and one “optimisation” was reverted when a clean
+      re-measurement showed it made renders slower.</p>
+    </div>
+    <div>
+      <h3>The tests are real</h3>
+      <p>CI typechecks and runs the suite on Linux and macOS with ffmpeg
+      installed, then plans every example and renders stills and a clip end to
+      end.</p>
+    </div>
+    <div>
+      <h3>It is still young software</h3>
+      <p>Being model-written makes it neither more nor less trustworthy than any
+      other new project. Read the code, and open an issue when it renders
+      something wrong.</p>
     </div>
   </div>
 </section>

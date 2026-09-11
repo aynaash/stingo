@@ -123,6 +123,8 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 3rem 0; }
 }
 .hero p.lede { font-size: var(--step-1); color: var(--muted); margin: 0 0 2.2rem; max-width: 46ch; line-height: 1.45; }
 .hero .cta { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; }
+.hero .etymology { max-width: 52ch; margin: -1.4rem 0 2.2rem; color: var(--muted); font-size: var(--step--1); line-height: 1.6; border-left: 2px solid var(--border); padding-left: 1rem; }
+.hero .etymology b { color: var(--text); font-weight: 600; }
 
 .btn {
   display: inline-block; padding: 0.7rem 1.35rem; border-radius: 6px;
@@ -154,6 +156,10 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 3rem 0; }
 .pane img { width: 100%; }
 .pane .code { border: 0; border-radius: 0; }
 .pane .code pre { border-radius: 0; }
+
+.demo { margin: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.demo video { display: block; width: 100%; height: auto; background: var(--bg); }
+.demo figcaption { padding: 0.7rem 0.95rem; border-top: 1px solid var(--border); color: var(--muted); font-family: var(--mono); font-size: 0.78rem; }
 
 .section { padding-block: clamp(3.5rem, 8vw, 6rem); }
 .section h2 {
@@ -302,7 +308,7 @@ export function footer(base: string) {
   <a href="${GITHUB}/blob/main/LICENSE" target="_blank" rel="noopener">AGPL-3.0</a>
   <a href="${u('start')}">Docs</a>
   <a href="${GITHUB}" target="_blank" rel="noopener">Source</a>
-  <span class="grow">Built with stingo, and documented in its own palette.</span>
+  <span class="grow">Written entirely by Claude, directed by Hersi. Documented in its own palette.</span>
 </div></footer>`;
 }
 

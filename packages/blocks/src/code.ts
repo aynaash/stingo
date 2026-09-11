@@ -62,7 +62,23 @@ export function codeBlock(s: any, c: BlockCtx): El {
   const lightSurface = luminance(palette.surface) > 0.45;
   const lines = tokenize(code, s.lang ?? 'ts', lightSurface ? CODE_THEMES.light : CODE_THEMES.dark)
     .map((toks) => toks.map((t) => ({ ...t, color: t.color ? legible(t.color, palette.surface) : t.color })));
-  const size = T.code(st);
+  // A code line does not wrap and does not shrink, so anything wider than the
+  // window was simply cut off at the border — mid-identifier, with no ellipsis
+  // and nothing to say it had happened. Size the type to the longest line
+  // instead. The window's inner width is the content column less its own
+  // padding, its border, and the line-number gutter.
+  const nominal = T.code(st);
+  const longest = lines.reduce((a, toks) => {
+    const len = toks.reduce((n, t) => n + t.content.length, 0);
+    return len > a.length ? toks.map((t) => t.content).join('') : a;
+  }, '');
+  // content column, less the window's own padding, its border, the gutter and
+  // the gap after it. Measured a shade conservatively: a line ending two
+  // characters early is invisible, a line clipped mid-identifier is not.
+  const innerW = (st.contentW - st.unit * 1.4 - 4 - nominal * 3.1) * 0.97;
+  const size = longest
+    ? c.fit(longest, 'mono', nominal, { maxWidth: innerW, wrap: false, floor: 0.4 }).size
+    : nominal;
   const lineH = size * c.taste.type.mono.lineHeight;
   const hl = new Set<number>(s.highlight ?? []);
   const reveal = s.reveal ?? 'lines';

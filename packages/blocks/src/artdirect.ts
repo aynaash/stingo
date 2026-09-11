@@ -44,8 +44,8 @@ export function compositionRect(block: string, s: Stage): Rect | null {
   // Portrait and square: a band below centre, the way a title card sits. The
   // band is kept tight — content centres inside it, so a tall band would float
   // the type in the middle of its own empty space and undo the point.
-  const top = Math.round(s.h * (s.orientation === 'square' ? 0.34 : 0.45));
-  const bottom = Math.round(s.h * 0.94);
+  const top = Math.round(s.h * (s.orientation === 'square' ? 0.42 : 0.53));
+  const bottom = Math.round(s.h * 0.93);
   return { x: 0, y: top, w: s.w, h: bottom - top };
 }
 
@@ -91,6 +91,9 @@ export function groundLayer(c: BlockCtx): string {
  *  and the cheapest way to make a frame look like it belongs to a series. It
  *  goes in the space the anchored composition just freed up. */
 function slate(c: BlockCtx, rect: Rect | null, opacity: number): string {
+  // no anchored composition means no space was freed, and a full-width panel
+  // would simply be drawn over the top of it
+  if (!rect) return '';
   const { palette } = c.taste;
   const s = c.stage;
   const size = s.unit * (s.orientation === 'landscape' ? 7.5 : 9);
@@ -120,20 +123,25 @@ function baseline(c: BlockCtx, rect: Rect | null, opacity: number): string {
   const { palette } = c.taste;
   const weight = Math.max(1.5, s.unit * 0.055);
 
+  // the rule and its accent segment share one opacity: if the rule is too faint
+  // to see, a visible accent segment is just a dash floating in space
+  const rail = (opacity * 0.62).toFixed(3);
+  const tick = (opacity * 1.5).toFixed(3);
+
   if (s.orientation === 'landscape') {
     const x = rect.x + rect.w;
     const y2 = interpolate(p, [0, 1], [s.h * 0.5, s.h]);
     return `<rect x="${x.toFixed(1)}" y="${(s.h - y2).toFixed(1)}" width="${weight}" height="${y2.toFixed(1)}" `
-      + `fill="${palette.border}" opacity="${opacity.toFixed(3)}"/>`
+      + `fill="${palette.muted}" opacity="${rail}"/>`
       + `<rect x="${x.toFixed(1)}" y="${(s.padY).toFixed(1)}" width="${weight}" height="${(s.unit * 3 * p).toFixed(1)}" `
-      + `fill="${palette.accent}" opacity="${(opacity * 1.8).toFixed(3)}"/>`;
+      + `fill="${palette.accent}" opacity="${tick}"/>`;
   }
   const y = rect.y;
   const w = interpolate(p, [0, 1], [s.w * 0.4, s.w]);
   return `<rect x="0" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${weight}" `
-    + `fill="${palette.border}" opacity="${opacity.toFixed(3)}"/>`
+    + `fill="${palette.muted}" opacity="${rail}"/>`
     + `<rect x="${s.padX.toFixed(1)}" y="${y.toFixed(1)}" width="${(s.unit * 2.6 * p).toFixed(1)}" height="${weight}" `
-    + `fill="${palette.accent}" opacity="${(opacity * 1.9).toFixed(3)}"/>`;
+    + `fill="${palette.accent}" opacity="${tick}"/>`;
 }
 
 /** Crop marks at the corners of the safe area. Borrowed from print, and the
@@ -148,8 +156,8 @@ function cornerMarks(c: BlockCtx, opacity: number): string {
   const o = (opacity * p).toFixed(3);
   const L = len * p;
   const corner = (cx: number, cy: number, sx: number, sy: number) =>
-    `<rect x="${(cx - (sx < 0 ? L : 0)).toFixed(1)}" y="${cy.toFixed(1)}" width="${L.toFixed(1)}" height="${t}" fill="${palette.border}" opacity="${o}"/>`
-    + `<rect x="${cx.toFixed(1)}" y="${(cy - (sy < 0 ? L : 0)).toFixed(1)}" width="${t}" height="${L.toFixed(1)}" fill="${palette.border}" opacity="${o}"/>`;
+    `<rect x="${(cx - (sx < 0 ? L : 0)).toFixed(1)}" y="${cy.toFixed(1)}" width="${L.toFixed(1)}" height="${t}" fill="${palette.muted}" opacity="${o}"/>`
+    + `<rect x="${cx.toFixed(1)}" y="${(cy - (sy < 0 ? L : 0)).toFixed(1)}" width="${t}" height="${L.toFixed(1)}" fill="${palette.muted}" opacity="${o}"/>`;
 
   return corner(inset.x, inset.y, 1, 1)
     + corner(s.w - inset.x - t, inset.y, -1, 1)
@@ -162,8 +170,8 @@ function cornerMarks(c: BlockCtx, opacity: number): string {
  *  "crt" gets the lot. No new schema field — the intent is already stated. */
 export function furnitureLayer(c: BlockCtx, rect: Rect | null): string {
   const tex = c.taste.texture;
-  const strength = clamp(0.45 + tex.grid * 3.4, 0.35, 1);
+  const strength = clamp(0.62 + tex.grid * 2.2, 0.55, 1);
   return baseline(c, rect, 0.55 * strength)
-    + slate(c, rect, 0.055 + tex.grid * 0.35)
-    + cornerMarks(c, 0.62 * strength);
+    + slate(c, rect, 0.075 + tex.grid * 0.3)
+    + cornerMarks(c, 0.30 * strength);
 }

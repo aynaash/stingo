@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 
 /** Intrinsic image dimensions, read from the file header.
  *
@@ -94,12 +95,45 @@ export function imageInfo(file: string): ImageInfo {
     );
   }
 
+  // resvg decodes png, jpeg, gif and svg in an <image> href. It does not decode
+  // webp or avif — and rather than failing it draws nothing at all, so the block
+  // renders an empty window and says nothing about why. Transcoding through
+  // ffmpeg, which is already a hard requirement, turns a silently blank frame
+  // into a correct one. spawnSync keeps this on the synchronous render path.
+  let bytes = buf;
+  let outMime = mime;
+  if (RASTERISE.has(ext)) {
+    const png = toPng(file);
+    if (png) { bytes = png; outMime = 'image/png'; }
+    else {
+      console.warn(
+        `[image] ${file} is ${ext}, which the renderer cannot draw, and converting it with `
+        + 'ffmpeg failed. The image will be blank. Convert it to png or jpeg.',
+      );
+    }
+  }
+
   const info: ImageInfo = {
-    ...size, mime,
-    dataUri: `data:${mime};base64,${buf.toString('base64')}`,
+    ...size, mime: outMime,
+    dataUri: `data:${outMime};base64,${bytes.toString('base64')}`,
   };
   cache.set(file, info);
   return info;
+}
+
+/** Formats the rasteriser cannot decode itself. */
+const RASTERISE = new Set(['webp', 'avif', 'heic', 'heif', 'tif', 'tiff', 'bmp']);
+
+/** Convert an image to PNG bytes with ffmpeg. Returns null if that fails.
+ *  Runs once per file: the result is cached with the rest of the image info. */
+function toPng(file: string): Buffer | null {
+  try {
+    const r = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', file,
+      '-frames:v', '1', '-f', 'image2', '-c:v', 'png', 'pipe:1'],
+      { maxBuffer: 256 * 1024 * 1024 });
+    if (r.status === 0 && r.stdout?.length) return Buffer.from(r.stdout);
+  } catch { /* ffmpeg missing or unreadable input — reported by the caller */ }
+  return null;
 }
 
 /** Fit a source into a box, the way CSS object-fit would. */

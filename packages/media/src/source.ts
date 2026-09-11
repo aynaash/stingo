@@ -72,7 +72,13 @@ export class VideoSource {
     if (this.closed) throw new Error('video source is closed');
     if (!(box.w > 0 && box.h > 0)) throw new Error(`camera box must be positive, got ${box.w}x${box.h}`);
 
-    const want = Math.max(0, Math.round(Math.max(0, time) * this.fps));
+    // The hold-on-tail behaviour at the end of this method only works if there
+    // is a decoded frame to hold. Seeking past the clip lands ffmpeg on nothing,
+    // so a large overshoot produced a black layer instead of a freeze — a short
+    // one worked only because it stayed inside the no-restart window. Clamping
+    // to the clip's last frame makes both paths behave the same.
+    const lastIndex = Math.max(0, Math.round(this.meta.duration * this.fps) - 1);
+    const want = Math.min(lastIndex, Math.max(0, Math.round(Math.max(0, time) * this.fps)));
     const reshaped = box.w !== this.box.w || box.h !== this.box.h || !sameFraming(framing, this.framing);
     if (reshaped) { this.box = { ...box }; this.framing = { ...framing }; }
 
@@ -82,13 +88,15 @@ export class VideoSource {
       return this.lastFrame;
     }
 
-    while (this.cursor < want) {
-      const next = await this.read();
-      if (!next) break;                       // ran off the end of the clip
-      this.lastFrame = next;
-      this.cursor++;
-      this.stats.decoded++;
+    await this.decodeTo(want);
+
+    // A seek that lands after the clip's last keyframe decodes nothing, leaving
+    // no tail frame to hold. One retry from slightly earlier finds a real one.
+    if (!this.lastFrame && want > 0) {
+      await this.restart(Math.max(0, want / this.fps - 0.5));
+      await this.decodeTo(want);
     }
+
     // holding the last decoded frame past the end beats failing a render that is
     // otherwise fine; a clip shorter than its scene simply freezes on its tail
     return (this.lastFrame ??= Buffer.alloc(box.w * box.h * 4));
@@ -147,6 +155,17 @@ export class VideoSource {
     }
     parts.push('format=rgba');   // opaque, so already premultiplied
     return parts.join(',');
+  }
+
+  /** Walk the decoder forward to `want`, stopping early at the end of the clip. */
+  private async decodeTo(want: number): Promise<void> {
+    while (this.cursor < want) {
+      const next = await this.read();
+      if (!next) break;                       // ran off the end of the clip
+      this.lastFrame = next;
+      this.cursor++;
+      this.stats.decoded++;
+    }
   }
 
   private async restart(time: number): Promise<void> {

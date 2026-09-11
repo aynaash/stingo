@@ -159,7 +159,7 @@ export class Film {
             style: this.doc.captions?.style ?? 'word',
             age: t - caption.cue.start,
           },
-          ctx,
+          frameCtx,
         )
       : null;
 

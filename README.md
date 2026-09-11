@@ -400,6 +400,13 @@ being precise about:
 The commit history carries session links, so you can see how each change was
 arrived at.
 
+## A note on `npm audit`
+
+Installing reports **3 moderate** advisories, all of them the same one:
+`fflate` 0.7.x, reached through satori. There is no fixed version upstream, and
+the issue is a denial of service when parsing a malformed ZIP64 archive —
+something stingo never does. It is noted here so it does not read as a surprise.
+
 ## Requirements
 
 **Bun ≥ 1.3** and ffmpeg ≥ 6 on `PATH`.

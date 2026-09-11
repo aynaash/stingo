@@ -103,13 +103,13 @@ if (!only || only === 'camera') {
   // chest — pulling the crop up is what the offsetY field is for
   await shot({ ...shape, name: 'camera-pip', at: 0.6, scenes: [{ block: 'code',
     lang: 'go', code: GO, highlight: [4, 5], caption: 'go starts it; the channel says when it finished.',
-    camera: { src: take, from: 3, layout: 'pip', corner: 'br', shape: 'circle', size: 0.3, zoom: 1.2, offsetY: -0.2 } }] });
+    camera: { src: take, from: 3, layout: 'pip', corner: 'br', shape: 'circle', size: 0.3, zoom: 1.2, offsetY: -0.27 } }] });
 
   await shot({ ...shape, name: 'camera-split', at: 0.7, scenes: [{ block: 'list',
     title: 'Why Sleep fails', marker: 'arrow',
     items: ['You are guessing how long work takes', 'Too short, and you drop results',
             'Too long, and you waste the speedup', 'It will break on a slower machine'],
-    camera: { src: take, from: 5, layout: 'split', side: 'left', ratio: 0.45, offsetY: -0.08 } }] });
+    camera: { src: take, from: 5, layout: 'split', side: 'left', ratio: 0.45, zoom: 1.25 } }] });
 }
 
 // ── the same scene under three tastes ──────────────────────────────────────

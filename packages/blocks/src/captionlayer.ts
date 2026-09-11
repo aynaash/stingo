@@ -8,6 +8,10 @@ export interface CaptionView {
   activeIndex: number;
   /** seconds since this cue appeared, for the entrance */
   age: number;
+  /** `word` picks out the word being said; `line` is a plain subtitle, which
+   *  is what you want under a recorded take where the timing is estimated and
+   *  a highlight that lands on the wrong word is worse than no highlight. */
+  style?: 'word' | 'line';
 }
 
 /** Burned-in captions.
@@ -47,6 +51,10 @@ export function captionLayer(v: CaptionView, c: BlockCtx): El {
       opacity: pop,
     },
       ...v.words.map((w, i) => {
+        if (v.style === 'line') {
+          // a plain subtitle: one weight, no tracking of position
+          return text({ ...typeStyle(c, 'display', size, palette.text) }, w.text);
+        }
         const active = i === v.activeIndex;
         return text({
           ...typeStyle(c, 'display', size, active ? palette.accent : palette.text),

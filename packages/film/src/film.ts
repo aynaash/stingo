@@ -141,6 +141,13 @@ export class Film {
         box({ position: 'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h }, content));
     }
 
+    // Overlays are appended to the OUTER, full-frame box, but `ctx.stage` is the
+    // block's composition rect — a smaller, offset box. Positioning an overlay
+    // against a substage puts it wherever that rect happens to be, which is how
+    // captions ended up halfway up the frame. Frame furniture gets frame
+    // coordinates.
+    const frameCtx: BlockCtx = { ...ctx, stage };
+
     // captions sit above the block and below the HUD, so they never cover the
     // progress bar and are never covered by scene content
     const caption = this.captions ? captionAt(this.captions, t) : null;
@@ -149,6 +156,7 @@ export class Film {
           {
             words: caption.cue.words,
             activeIndex: caption.wordIndex,
+            style: this.doc.captions?.style ?? 'word',
             age: t - caption.cue.start,
           },
           ctx,
@@ -157,8 +165,8 @@ export class Film {
 
     const overlays = [captionEl,
       ...(this.hud
-        ? [sceneChip(hit.cue.index, this.timeline.cues.length, ctx),
-           progressBar(t, this.timeline.duration, ctx)]
+        ? [sceneChip(hit.cue.index, this.timeline.cues.length, frameCtx),
+           progressBar(t, this.timeline.duration, frameCtx)]
         : [])].filter(Boolean);
 
     const el = overlays.length

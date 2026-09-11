@@ -57,6 +57,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@resvg/resvg-js": "^2.6.2",
+    "@types/node": "^22.0.0",
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.2.0",
     "satori": "^0.33.4",

@@ -54,7 +54,11 @@ export interface CaptionOpts {
 export function captionCues(
   doc: VideoDoc, timeline: Timeline, taste: TasteProfile, opts: CaptionOpts = {},
 ): CaptionCue[] {
-  const maxWords = opts.maxWords ?? (doc.canvas.orientation === 'portrait' ? 4 : 7);
+  // `word` style shows a few words at a time so the highlight has somewhere to
+  // travel; `line` is a subtitle and wants a whole readable line at once
+  const lineStyle = doc.captions?.style === 'line';
+  const maxWords = opts.maxWords
+    ?? (doc.canvas.orientation === 'portrait' ? (lineStyle ? 7 : 4) : (lineStyle ? 12 : 7));
   const lead = opts.lead ?? 0.12;
   const cues: CaptionCue[] = [];
 

@@ -38,7 +38,7 @@ export async function makeStandIn(out: string, opts: { w?: number; h?: number; s
     <text x="${W / 2}" y="${H * 0.74}" font-family="JetBrains Mono" font-size="${W * 0.032}"
           fill="#a4897a" text-anchor="middle">stand-in take</text>
     <text x="${W / 2}" y="${H * 0.775}" font-family="JetBrains Mono" font-size="${W * 0.022}"
-          fill="#6b5a4c" text-anchor="middle">record your own — see RECORDING.md</text>
+          fill="#6b5a4c" text-anchor="middle">see RECORDING.md</text>
   </svg>`;
 
   const fonts = [resolve('assets/fonts/JetBrainsMonoNerdFont-Regular.ttf')];

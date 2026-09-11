@@ -1,6 +1,6 @@
-A video document is YAML, JSON, or a TypeScript module. It has four parts:
-what the film is called, what shape it is, which taste profile it wears, and
-the scenes.
+A video document is YAML, JSON, or a TypeScript module. It says what the film
+is called, what shape it is, which taste profile it wears, what it sounds like,
+whether it is captioned — and, the bulk of it, the scenes.
 
 ```yaml
 title: Concurrency in Go, in five minutes
@@ -77,6 +77,34 @@ committing to a render.
 Music is looped or trimmed to length, faded at both ends, ducked under any
 speech by a sidechain compressor, and normalised to the taste's target
 loudness — −14 LUFS by default, which is what the platforms want.
+
+## captions
+
+```yaml
+captions:
+  enabled: true
+  burn: true
+```
+
+| Field | Type | Default | |
+|---|---|---|---|
+| `enabled` | boolean | `false` | off unless you ask for it |
+| `burn` | boolean | `true` | draw them into the frame |
+| `style` | `word` · `line` | `word` | accepted by the schema, not read yet |
+
+Captions come from the `say` field on each scene — there is no second script to
+keep in sync. Words are spread across the scene at the taste's
+`wordsPerMinute`, grouped into short chunks, and drawn above the platform safe
+area with the word being spoken picked out.
+
+This is **estimated timing, not forced alignment**. It tracks text-to-speech
+generated from the same words; against a recorded take it will drift.
+
+Whenever `enabled` is set, `.srt` and `.vtt` sidecars are written beside the
+MP4 — burned in or not, because a burned-in caption is invisible to search. If
+no scene carries a `say`, `render` says so and writes nothing.
+
+From TypeScript, `.captions()` on the film builder turns them on.
 
 ## scenes
 

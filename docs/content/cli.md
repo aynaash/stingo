@@ -1,5 +1,6 @@
-Every command takes a video document except `beats` (audio), `taste` (a colour)
-and `tastes` (nothing).
+Every command takes a video document except `beats` (an audio file), `taste` (a
+brand colour), `doctor` (a taste name or path), and `blocks` and `tastes`
+(nothing, or one block name).
 
 ## render
 

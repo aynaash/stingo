@@ -34,6 +34,16 @@ explainer in it.
   delivery           over code          side by side
 ```
 
+<div class="gallery">
+  <figure><img src="../assets/img/camera-full.webp" width="520" height="924" loading="lazy" decoding="async" alt="The take fills the frame, with a lower third and a caption drawn over it."><figcaption>full</figcaption></figure>
+  <figure><img src="../assets/img/camera-pip.webp" width="520" height="924" loading="lazy" decoding="async" alt="A circular corner inset sitting on top of a code block."><figcaption>pip</figcaption></figure>
+  <figure><img src="../assets/img/camera-split.webp" width="520" height="924" loading="lazy" decoding="async" alt="The take down the left side, a list block in the panel beside it."><figcaption>split</figcaption></figure>
+</div>
+
+Those are three moments of one recording, picked with `from`. The take is a
+**generated stand-in**, not footage of anyone — it says so in the frame. Shoot
+your own: [RECORDING.md](https://github.com/aynaash/stingo/blob/main/examples/building-stingo/RECORDING.md).
+
 | Layout | The take | The block content |
 |---|---|---|
 | `full` | fills the frame | draws **over** it — captions stay readable |

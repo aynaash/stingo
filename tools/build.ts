@@ -14,7 +14,7 @@
  *  Runtime dependencies stay external: satori, resvg and shiki are large, and
  *  resvg ships a native binary that must not be inlined. */
 import { rm, mkdir, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, dirname, relative, sep } from 'node:path';
 import { spawn } from 'bun';
 
 const PKG = 'packages/stingo';
@@ -104,7 +104,55 @@ const t1 = Date.now();
 await run(['node_modules/.bin/tsc', '-p', 'tsconfig.build.json'], 'tsc');
 console.log(`\r  \x1b[32m✓\x1b[0m types     in ${Date.now() - t1}ms`);
 
-// 5. report
+// 5. rewrite the workspace aliases tsc preserved in the declarations
+//
+//    tsc emits `from '@stingo/schema'` because that is what the source says and
+//    the monorepo tsconfig maps it. A consumer has no @stingo/* packages — they
+//    are inlined into the bundle — so every one of those specifiers resolves to
+//    nothing. With skipLibCheck off that is a wall of errors; with it on, which
+//    is the tsc --init default, the whole API silently degrades to `any`, which
+//    is worse. typesVersions cannot help: it maps a package's own subpaths, not
+//    bare specifiers. So the imports are rewritten to relative paths inside the
+//    shipped types tree.
+process.stdout.write('  type paths…');
+const tp = Date.now();
+const typeRoot = join(OUT, 'types');
+let rewritten = 0;
+const walk = async (dir: string): Promise<string[]> => {
+  const out: string[] = [];
+  for (const e of await readdir(dir, { withFileTypes: true })) {
+    const full = join(dir, e.name);
+    if (e.isDirectory()) out.push(...await walk(full));
+    else if (e.name.endsWith('.d.ts')) out.push(full);
+  }
+  return out;
+};
+for (const file of await walk(typeRoot)) {
+  const src = await Bun.file(file).text();
+  const fixed = src.replace(/(['"])@stingo\/([a-z-]+)((?:\/[A-Za-z0-9_.-]+)*)\1/g, (_m, q, pkg, rest) => {
+    const target = join(typeRoot, pkg, rest ? rest.replace(/^\//, '') : 'src/index');
+    let rel = relative(dirname(file), target).split(sep).join('/');
+    if (!rel.startsWith('.')) rel = './' + rel;
+    return q + rel + q;
+  });
+  if (fixed !== src) { await Bun.write(file, fixed); rewritten++; }
+}
+// The public API exposes Buffer (framePixels, framePng, blendUnder), so the
+// declarations name it. Automatic @types inclusion does not reach a dependency's
+// .d.ts reliably, and a consumer on a default tsconfig then gets "Cannot find
+// name 'Buffer'". A reference directive in the entry pulls node's globals in
+// whatever the consumer configured.
+for (const entry of ['stingo/src/index.d.ts', 'stingo/src/media.d.ts']) {
+  const f = join(typeRoot, entry);
+  if (!(await Bun.file(f).exists())) continue;
+  const body = await Bun.file(f).text();
+  if (!body.startsWith('/// <reference types="node"')) {
+    await Bun.write(f, `/// <reference types="node" />\n${body}`);
+  }
+}
+console.log(`\r  \x1b[32m✓\x1b[0m type paths ${rewritten} files in ${Date.now() - tp}ms`);
+
+// 6. report
 const files = await readdir(OUT, { recursive: true } as any);
 console.log(`\n  ${OUT}/`);
 for (const f of (files as string[]).filter((f) => !f.includes('/')).sort()) {

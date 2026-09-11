@@ -494,6 +494,12 @@ That is what makes scrubbing, parallel rendering and deterministic output work.
 | `taste` | the resolved profile: palette, type, motion, texture |
 | `grid` | the beat grid, for anything that should land on the music |
 | `index` | scene number, useful as a deterministic seed |
+| `family` | resolve a font family name against what is actually loaded |
+| `fit` | the largest size at or below one you ask for at which text fits a box |
+| `tokens` | the words that will actually be laid out, already broken to fit |
+
+satori will not shrink text to fit, so a block that renders a headline without
+asking `fit` for a size is a block that can run it off the edge of the frame.
 
 Size everything from `stage.unit` and the `T.*` scale. That is what lets one
 composition render at 1080×1920 and 1920×1080 without a second layout.

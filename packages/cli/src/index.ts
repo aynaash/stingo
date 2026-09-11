@@ -10,6 +10,8 @@ import { DEFAULT_GRID, toSeconds, type BeatGrid } from '@stingo/core';
 import { dirname, join, resolve, basename, extname } from 'node:path';
 import { mkdir } from 'node:fs/promises';
 
+const VERSION = '0.1.0';
+
 const C = { dim: '\x1b[2m', b: '\x1b[1m', p: '\x1b[35m', t: '\x1b[36m', g: '\x1b[32m', y: '\x1b[33m', r: '\x1b[31m', x: '\x1b[0m' };
 const log = (s = '') => console.log(s);
 const fmtT = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -385,8 +387,19 @@ try {
       break;
     }
 
-    case 'help': default:
+    case 'version': case '--version': case '-v':
+      log(VERSION);
+      break;
+
+    case 'help':
       log(HELP);
+      break;
+
+    default:
+      // exiting 0 on an unknown command means a typo passes silently in CI
+      log(HELP);
+      log(`${C.r}✗ unknown command "${cmd}"${C.x}`);
+      process.exit(1);
   }
 } catch (e: any) {
   log(`${C.r}✗ ${e.message}${C.x}`);

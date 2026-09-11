@@ -1,0 +1,26 @@
+name: Idea or missing capability
+description: A block, a taste knob, a command, or something you could not express
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to make
+      description: >
+        Describe the video, not the feature. What should the viewer see?
+        Most of the best changes here came from someone describing a shot.
+    validations: { required: true }
+
+  - type: textarea
+    id: blocked
+    attributes:
+      label: Where you got stuck
+      description: What you tried, and what stingo would not let you say.
+    validations: { required: true }
+
+  - type: textarea
+    id: shape
+    attributes:
+      label: What it might look like
+      description: Optional — a guess at the YAML or API. Being wrong is fine, it still helps.
+      render: yaml

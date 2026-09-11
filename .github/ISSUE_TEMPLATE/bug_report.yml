@@ -1,0 +1,55 @@
+name: Something rendered wrong
+description: A video, frame or timeline that came out other than you expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A still is worth a lot here:
+        `stingo still script.yaml --at 4.2 -o bad.png` and drag it in.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead.
+      placeholder: The pip inset should sit over the code block, but the code draws on top of it.
+    validations: { required: true }
+
+  - type: textarea
+    id: script
+    attributes:
+      label: The script
+      description: The smallest video document that shows it. Trim it down if you can.
+      render: yaml
+    validations: { required: true }
+
+  - type: textarea
+    id: taste
+    attributes:
+      label: The taste profile
+      description: A built-in name (`bootdev`, `dusk`) is fine, or paste the JSON.
+      placeholder: bootdev
+    validations: { required: true }
+
+  - type: input
+    id: command
+    attributes:
+      label: The command you ran
+      placeholder: stingo render script.yaml --vertical --draft
+    validations: { required: true }
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Anything stingo printed, including warnings. Add `--debug` for a stack trace.
+      render: shell
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: "Output of: `bun --version && ffmpeg -version | head -1 && uname -sm`"
+      render: shell
+    validations: { required: true }

@@ -1,0 +1,87 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A second push should cancel the first run rather than queue behind it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # ffmpeg is not optional: it decodes takes, mixes audio and encodes MP4,
+      # so a run without it would skip most of what there is to test
+      - name: Install ffmpeg (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install ffmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+
+      - run: ffmpeg -version | head -1
+
+      - run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun test
+
+  render:
+    name: render end to end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: bun install --frozen-lockfile
+
+      # the planner and the still path exercise layout, fonts, shiki and the
+      # texture pass without spending CI minutes on a full render
+      - name: Plan the examples
+        run: |
+          bun stingo plan examples/goroutines/video.yaml
+          bun stingo plan examples/building-stingo/video.yaml
+          bun stingo plan examples/building-stingo/reel.yaml
+
+      - name: Render stills
+        run: |
+          bun stingo still examples/goroutines/video.yaml --at 2.5 -o /tmp/a.png
+          bun stingo still examples/goroutines/video.yaml --at 30 -o /tmp/b.png --horizontal
+          bun stingo still examples/building-stingo/video.yaml --at 2 -o /tmp/c.png --no-camera
+
+      - name: Render a short clip
+        run: |
+          bun stingo render examples/building-stingo/reel.yaml \
+            --no-camera --draft -o /tmp/reel.mp4
+          ffprobe -v error -show_entries format=duration,size -of default=nk=1 /tmp/reel.mp4
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frames
+          path: /tmp/*.png
+          retention-days: 7

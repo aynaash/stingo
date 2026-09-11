@@ -22,6 +22,9 @@
       "@stingo/film": ["./packages/film/src/index.ts"],
       "@stingo/audio": ["./packages/audio/src/index.ts"],
       "@stingo/encode": ["./packages/encode/src/index.ts"],
+      "@stingo/media": ["./packages/media/src/index.ts"],
+      "@stingo/studio": ["./packages/studio/src/index.ts"],
+      "@stingo/cli": ["./packages/cli/src/index.ts"],
       "stingo": ["./packages/stingo/src/index.ts"]
     }
   },

@@ -1,13 +1,15 @@
 #!/usr/bin/env bun
 import { parseArgs, num, str } from './args';
 import { loadDoc, loadTaste } from './load';
-import { Film, renderVideo, plan, probeClips, cameraAudioCuts, checkTextFits, captionCues, toSrt, toVtt } from '@stingo/film';
-import { analyzeBeats, mixAudio, measureLoudness } from '@stingo/audio';
+import { doctorDoc, looksLikeDoc } from './doctor';
+import { Film, renderVideo, plan, probeClips, cameraAudioCuts, checkTextFits, captionCues, toSrt, toVtt,
+         sayWarnings, takeBudget, contactSheet, guidesSvg } from '@stingo/film';
+import { analyzeBeats, mixAudio, measureLoudness, verifyMix } from '@stingo/audio';
 import { THEMES, derive, audit, repair, contrast, HOUSE } from '@stingo/themes';
 import { CANVAS_PRESETS, TasteProfile, allBlocks, blockNames } from '@stingo/schema';
 import '@stingo/blocks';   // registering the built-in block set
 import { DEFAULT_GRID, toSeconds, type BeatGrid } from '@stingo/core';
-import { dirname, join, resolve, basename, extname } from 'node:path';
+import { dirname, join, relative, resolve, basename, extname } from 'node:path';
 import { mkdir } from 'node:fs/promises';
 
 const VERSION = '0.1.0';
@@ -15,6 +17,16 @@ const VERSION = '0.1.0';
 const C = { dim: '\x1b[2m', b: '\x1b[1m', p: '\x1b[35m', t: '\x1b[36m', g: '\x1b[32m', y: '\x1b[33m', r: '\x1b[31m', x: '\x1b[0m' };
 const log = (s = '') => console.log(s);
 const fmtT = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+/** loadDoc resolves assets to absolute paths so render workers can find them;
+ *  an error message wants the path the author actually typed. */
+const rel = (p: string) => {
+  const r = relative(process.cwd(), p);
+  return !r || r.startsWith('..') ? p : r;
+};
+
+/** One glyph per check level, padded so the messages line up. */
+const badge = (c: { level: string }) =>
+  c.level === 'error' ? `${C.r}✗ error${C.x}` : c.level === 'warn' ? `${C.y}! warn ${C.x}` : `${C.g}✓ ok   ${C.x}`;
 
 function bar(done: number, total: number, width = 28) {
   const p = total ? done / total : 0;
@@ -22,14 +34,59 @@ function bar(done: number, total: number, width = 28) {
   return `${C.p}${'█'.repeat(n)}${C.dim}${'░'.repeat(width - n)}${C.x} ${String(Math.round(p * 100)).padStart(3)}%`;
 }
 
-async function resolveGrid(doc: any, flags: Record<string, any>): Promise<BeatGrid> {
-  const music = str(flags.music, doc.audio?.music ?? '');
-  const bpmFlag = flags.bpm ? Number(flags.bpm) : undefined;
-  if (!music) return bpmFlag ? { ...DEFAULT_GRID, bpm: bpmFlag } : DEFAULT_GRID;
-  const declared = doc.audio?.bpm;
-  const a = await analyzeBeats(music, { bpm: bpmFlag ?? (typeof declared === 'number' ? declared : undefined) });
-  return { bpm: a.bpm, offset: a.offset, beatsPerBar: a.beatsPerBar, onsets: a.onsets };
+/** The beat grid, the usable music path, and what went wrong getting there.
+ *
+ *  A missing track used to end the command. It should not: `plan` renders
+ *  nothing and decodes nothing, and `still` draws one frame — neither needs
+ *  audio, they need a tempo. So a track that is declared and not there is
+ *  reported, the music is dropped from everything downstream, and cutting falls
+ *  back to free timing, which is the honest answer when there is no grid to
+ *  snap to. Snapping to a nominal 120 BPM instead would produce a plan that is
+ *  wrong in a way that looks right. */
+interface Tempo {
+  grid: BeatGrid;
+  /** the track, if it can actually be used; '' otherwise */
+  music: string;
+  /** true when cuts must not be snapped, because no real tempo was found */
+  free: boolean;
+  warnings: string[];
 }
+
+async function resolveTempo(doc: any, flags: Record<string, any>): Promise<Tempo> {
+  const declared = str(flags.music, doc.audio?.music ?? '');
+  const bpmFlag = flags.bpm ? Number(flags.bpm) : undefined;
+  const warnings: string[] = [];
+  const nominal = bpmFlag ? { ...DEFAULT_GRID, bpm: bpmFlag } : DEFAULT_GRID;
+
+  // no music declared is not a problem; it is a film cut to its own content
+  if (!declared) return { grid: nominal, music: '', free: false, warnings };
+
+  if (!(await Bun.file(declared).exists())) {
+    warnings.push(
+      `no such file ${rel(declared)} — cutting free and rendering without music. `
+      + 'Point `audio.music` at a track, or remove the `audio:` block',
+    );
+    return { grid: nominal, music: '', free: !bpmFlag, warnings };
+  }
+
+  const bpm = bpmFlag ?? (typeof doc.audio?.bpm === 'number' ? doc.audio.bpm : undefined);
+  try {
+    const a = await analyzeBeats(declared, { bpm });
+    return {
+      grid: { bpm: a.bpm, offset: a.offset, beatsPerBar: a.beatsPerBar, onsets: a.onsets },
+      music: declared, free: false, warnings,
+    };
+  } catch (e: any) {
+    warnings.push(
+      `${basename(declared)} could not be decoded — ${String(e.message).split('\n')[0]!.trim()}. `
+      + 'Cutting free and rendering without music; check the file plays and that ffmpeg reads the format',
+    );
+    return { grid: nominal, music: '', free: !bpmFlag, warnings };
+  }
+}
+
+/** A taste with grid snapping switched off, for planning without a tempo. */
+const freeCut = (t: any) => ({ ...t, pacing: { ...t.pacing, cutOn: 'free' } });
 
 const HELP = `
 ${C.b}${C.p}stingo${C.x} ${C.dim}— declarative video for people who ship content${C.x}
@@ -40,12 +97,13 @@ ${C.b}USAGE${C.x}
 ${C.b}COMMANDS${C.x}
   ${C.t}render${C.x} <doc>        render a video document to MP4
   ${C.t}still${C.x}  <doc>        render a single frame to PNG
+  ${C.t}sheet${C.x}  <doc>        contact sheet — one still per scene, in a grid
   ${C.t}plan${C.x}   <doc>        print the resolved timeline, render nothing
+  ${C.t}doctor${C.x} <doc|taste>  check everything a render needs, in one pass
   ${C.t}beats${C.x}  <audio>      analyse tempo, downbeat and onsets
   ${C.t}blocks${C.x}              list registered blocks and their fields
   ${C.t}tastes${C.x}              list built-in taste profiles
   ${C.t}taste${C.x}  <brand-hex>   derive a full taste profile from one colour
-  ${C.t}doctor${C.x} <taste>       audit a taste profile against the house floors
   ${C.t}preview${C.x} <doc>       serve a live scrubbing preview
   ${C.t}takes${C.x}  <doc>        inspect the camera takes a script references
   ${C.t}version${C.x}             print the version and exit
@@ -59,12 +117,16 @@ ${C.b}OPTIONS${C.x}
   --bpm <n>             force tempo instead of detecting it
   --workers <n>         parallel render processes (default: cpu count)
   --frame <n>           which frame, for \`still\`
-  --at <seconds>        which time, for \`still\`
+  --at <seconds>        which time, for \`still\` (a 0..1 fraction for \`sheet\`)
+  --guides              overlay title-safe and platform UI zones, for \`still\`
+  --width <n>           sheet width in pixels (default 2000)
+  --cols <n>            sheet columns (default: chosen from the scene count)
   --crf <n>             quality, lower is better (default 20)
   --preset <name>       x264 preset (default medium)
   --draft               fast, lower quality pass for iterating
   --no-camera           draw camera placeholders instead of decoding footage
   --no-hud              hide the progress bar and scene counter
+  --no-verify           skip measuring the finished mix
   --debug               print a stack trace on failure
   --port <n>            preview server port (default 4321)
 
@@ -93,9 +155,11 @@ try {
       if (!file) throw new Error('render: give a video document, e.g. `stingo render video.yaml`');
       const doc = await loadDoc(file);
       applyCanvasFlags(doc);
-      const taste = await loadTaste(str(flags.taste, '') || doc.taste, dirname(resolve(file)));
-      const grid = await resolveGrid(doc, flags);
-      const music = str(flags.music, doc.audio.music ?? '');
+      const declared = await loadTaste(str(flags.taste, '') || doc.taste, dirname(resolve(file)));
+      const tempo = await resolveTempo(doc, flags);
+      const { grid } = tempo;
+      const music = tempo.music;
+      const taste = tempo.free ? freeCut(declared) : declared;
       const out = resolve(str(flags.out ?? flags.o, join('out', `${basename(file, extname(file))}.mp4`)));
       await mkdir(dirname(out), { recursive: true });
 
@@ -105,8 +169,10 @@ try {
       log(`${C.dim}  ${doc.canvas.width}x${doc.canvas.height} @ ${doc.canvas.fps}fps · ${doc.scenes.length} scenes · ${fmtT(timeline.duration)} · taste "${taste.name}"${C.x}`);
       if (music) log(`${C.dim}  music ${basename(music)} · ${grid.bpm} BPM · cuts on ${taste.pacing.cutOn}${C.x}`);
       if (info.length) log(`${C.dim}  camera ${info.length} take${info.length > 1 ? 's' : ''} · ${info.map((i) => `${basename(i.src)} ${fmtT(i.duration)}`).join(' · ')}${C.x}`);
+      for (const w of tempo.warnings) log(`${C.y}  warning: ${w}${C.x}`);
       for (const m of missing) log(`${C.y}  warning: camera source not readable, rendering a placeholder — ${m}${C.x}`);
       for (const w of warnings) log(`${C.y}  warning: ${w}${C.x}`);
+      for (const w of sayWarnings(doc, taste, timeline)) log(`${C.y}  warning: ${w}${C.x}`);
       for (const w of await checkTextFits(doc, taste)) log(`${C.y}  warning: ${w}${C.x}`);
       log();
 
@@ -164,6 +230,26 @@ try {
       log(`${C.g}${C.b}  ✓ ${res.file}${C.x}`);
       log(`${C.dim}    ${fmtT(res.duration)} · ${size.toFixed(1)} MB · rendered in ${fmtT(res.seconds)} on ${res.workers} workers · ${(res.duration / res.seconds).toFixed(2)}x realtime${C.x}`);
       for (const f of sidecars) log(`${C.g}  ✓${C.x} ${f}`);
+
+      // Bad audio is what loses viewers, and it is the one fault a still cannot
+      // show you. Measuring it costs two passes over the audio, against minutes
+      // of rendering, so it is not optional — only --no-verify skips it.
+      //
+      // The finished MP4 is measured rather than the pre-encode stem, because
+      // AAC overshoots: the same mix reads -1.1 dBTP before encoding and -0.9
+      // after, and it is the shipped number that clips.
+      if (audioFile && !flags['no-verify']) {
+        const mix = await verifyMix({
+          file: res.file, targetLufs: taste.music.targetLufs,
+          music: music || undefined, musicGainDb: doc.audio.musicGainDb,
+          vo: doc.audio.vo, clips: camCuts,
+        });
+        if (mix) {
+          const lead = mix.lead != null ? ` · speech ${mix.lead >= 0 ? '+' : ''}${mix.lead.toFixed(1)} LU over music` : '';
+          log(`${C.dim}    audio ${mix.lufs.toFixed(1)} LUFS · true peak ${mix.peak.toFixed(1)} dBTP${lead}${C.x}`);
+          for (const n of mix.notes) log(`${C.y}    audio: ${n}${C.x}`);
+        }
+      }
       break;
     }
 
@@ -172,18 +258,57 @@ try {
       if (!file) throw new Error('still: give a video document');
       const doc = await loadDoc(file);
       applyCanvasFlags(doc);
-      const taste = await loadTaste(str(flags.taste, '') || doc.taste, dirname(resolve(file)));
-      const grid = await resolveGrid(doc, flags);
+      const declared = await loadTaste(str(flags.taste, '') || doc.taste, dirname(resolve(file)));
+      const tempo = await resolveTempo(doc, flags);
+      const taste = tempo.free ? freeCut(declared) : declared;
+      for (const w of tempo.warnings) log(`${C.y}warning: ${w}${C.x}`);
       const { clips } = await probeClips(doc);
-      const film = await Film.create({ doc, taste, grid, hud: !flags['no-hud'], clips, noCamera: !!flags['no-camera'] });
+      const film = await Film.create({ doc, taste, grid: tempo.grid, hud: !flags['no-hud'], clips, noCamera: !!flags['no-camera'] });
       const frame = flags.at != null ? Math.round(num(flags.at, 0) * doc.canvas.fps) : num(flags.frame, 0);
-      if (frame >= film.frameCount) throw new Error(`frame ${frame} is past the end (${film.frameCount} frames, ${fmtT(film.duration)})`);
+      if (frame >= film.frameCount) throw new Error(`frame ${frame} is past the end (${film.frameCount} frames, ${fmtT(film.duration)}) — use --at ${(film.duration * 0.5).toFixed(1)} for the middle`);
       const out = resolve(str(flags.out ?? flags.o, `still-${frame}.png`));
       await mkdir(dirname(out), { recursive: true });
-      await Bun.write(out, await film.framePng(frame));
+      const guides = !!flags.guides;
+      await Bun.write(out, guides
+        ? await film.framePngOverlaid(frame, guidesSvg(doc, taste))
+        : await film.framePng(frame));
       await film.close();
       const hit = film.timeline.at(frame / doc.canvas.fps)!;
       log(`${C.g}✓${C.x} ${out} ${C.dim}— frame ${frame} (${(frame / doc.canvas.fps).toFixed(2)}s) · scene ${hit.cue.index} "${hit.cue.block}"${C.x}`);
+      if (guides) {
+        log(`${C.dim}  guides: title-safe 90%, action-safe 95%, and the ${doc.canvas.orientation} platform UI zones${C.x}`);
+        log(`${C.dim}  anything you need read belongs inside the title-safe box and outside the red zones${C.x}`);
+      }
+      break;
+    }
+
+    case 'sheet': {
+      const file = positional[0];
+      if (!file) throw new Error('sheet: give a video document, e.g. `stingo sheet video.yaml -o sheet.png`');
+      const doc = await loadDoc(file);
+      applyCanvasFlags(doc);
+      const declared = await loadTaste(str(flags.taste, '') || doc.taste, dirname(resolve(file)));
+      const tempo = await resolveTempo(doc, flags);
+      const taste = tempo.free ? freeCut(declared) : declared;
+      for (const w of tempo.warnings) log(`${C.y}warning: ${w}${C.x}`);
+      const { clips } = await probeClips(doc);
+      const out = resolve(str(flags.out ?? flags.o, join('out', `${basename(file, extname(file))}-sheet.png`)));
+      await mkdir(dirname(out), { recursive: true });
+
+      log(`${C.b}${doc.title}${C.x} ${C.dim}· ${doc.scenes.length} scenes${C.x}`);
+      const res = await contactSheet({
+        doc, taste, grid: tempo.grid, clips, noCamera: !!flags['no-camera'],
+        width: num(flags.width, 2000),
+        cols: flags.cols ? num(flags.cols, 0) || undefined : undefined,
+        at: flags.at != null ? num(flags.at, 0.5) : undefined,
+        onFrame: (d, t) => process.stdout.write(`  ${bar(d, t)} ${C.dim}${d}/${t} scenes${C.x}   \r`),
+      });
+      await Bun.write(out, res.png);
+      log(`  ${bar(res.cells, res.cells)} ${C.dim}${res.cells}/${res.cells} scenes${C.x}   `);
+      log();
+      log(`${C.g}✓${C.x} ${out} ${C.dim}— ${res.cols}×${res.rows} grid, ${res.width}x${res.height}${C.x}`);
+      log(`${C.dim}  one frame from the middle of each scene. Look for three dark scenes in a row,${C.x}`);
+      log(`${C.dim}  two that say the same thing, and the one that does not belong.${C.x}`);
       break;
     }
 
@@ -192,11 +317,14 @@ try {
       if (!file) throw new Error('plan: give a video document');
       const doc = await loadDoc(file);
       applyCanvasFlags(doc);
-      const taste = await loadTaste(str(flags.taste, '') || doc.taste, dirname(resolve(file)));
-      const grid = await resolveGrid(doc, flags);
+      const declared = await loadTaste(str(flags.taste, '') || doc.taste, dirname(resolve(file)));
+      const tempo = await resolveTempo(doc, flags);
+      const { grid } = tempo;
+      const taste = tempo.free ? freeCut(declared) : declared;
       const { clips, missing } = await probeClips(doc);
       const { timeline, warnings } = plan(doc, taste, grid, clips);
-      log(`${C.b}${doc.title}${C.x} ${C.dim}· ${doc.canvas.width}x${doc.canvas.height}@${doc.canvas.fps} · taste "${taste.name}" · ${grid.bpm} BPM · cuts on ${taste.pacing.cutOn}${C.x}`);
+      const tempoNote = tempo.music ? `${grid.bpm} BPM` : `${grid.bpm} BPM nominal`;
+      log(`${C.b}${doc.title}${C.x} ${C.dim}· ${doc.canvas.width}x${doc.canvas.height}@${doc.canvas.fps} · taste "${taste.name}" · ${tempoNote} · cuts on ${taste.pacing.cutOn}${C.x}`);
       log();
       const beatLen = 60 / grid.bpm;
       for (const c of timeline.cues) {
@@ -207,8 +335,22 @@ try {
       }
       log();
       log(`  ${C.b}total${C.x} ${fmtT(timeline.duration)} · ${timeline.frameCount} frames`);
+
+      // The shooting list. `plan` already knows how long every camera scene is;
+      // printing it as one line is what turns that into something you can tape
+      // to the wall before you sit down in front of the camera.
+      const budget = takeBudget(doc, timeline);
+      if (budget.length) {
+        const total = budget.reduce((a, b) => a + b.dur, 0);
+        log();
+        log(`  ${C.b}to camera${C.x} ${C.dim}${budget.length} scene${budget.length > 1 ? 's' : ''} · ${fmtT(total)} of footage${C.x}`);
+        log(`  ${budget.map((b) => `${C.t}${b.id}${C.x} ${Math.round(b.dur)}s`).join(` ${C.dim}·${C.x} `)}`);
+      }
+
+      for (const w of tempo.warnings) log(`${C.y}  warning: ${w}${C.x}`);
       for (const m of missing) log(`${C.y}  warning: camera source not readable — ${m}${C.x}`);
       for (const w of warnings) log(`${C.y}  warning: ${w}${C.x}`);
+      for (const w of sayWarnings(doc, taste, timeline)) log(`${C.y}  warning: ${w}${C.x}`);
       for (const w of await checkTextFits(doc, taste)) log(`${C.y}  warning: ${w}${C.x}`);
       break;
     }
@@ -311,7 +453,38 @@ try {
 
     case 'doctor': {
       const ref = positional[0];
-      if (!ref) throw new Error('doctor: give a taste name or path');
+      if (!ref) throw new Error('doctor: give a video document, or a taste name or path');
+
+      // `doctor` answers two different questions, and which one you meant is
+      // decided by what you handed it: a document gets the full preflight, a
+      // taste gets the contrast audit it has always got.
+      if (await looksLikeDoc(ref)) {
+        const rep = await doctorDoc(ref, str(flags.taste, ''));
+        log(`${C.b}${rep.title}${C.x} ${C.dim}· ${basename(rep.file)}${C.x}`);
+        log();
+        // a blank line only where a group of several checks ends, so a report
+        // that is all one-liners stays one block instead of double-spaced
+        const counts = new Map<string, number>();
+        for (const c of rep.checks) counts.set(c.area, (counts.get(c.area) ?? 0) + 1);
+        let area = '';
+        for (const c of rep.checks) {
+          if (area && c.area !== area && (counts.get(area)! > 1 || counts.get(c.area)! > 1)) log();
+          area = c.area;
+          log(`  ${badge(c)} ${C.dim}${c.area.padEnd(9)}${C.x} ${c.message}`);
+          if (c.fix) log(`  ${' '.repeat(17)} ${C.dim}→ ${c.fix}${C.x}`);
+        }
+        const errs = rep.checks.filter((c) => c.level === 'error').length;
+        const warns = rep.checks.filter((c) => c.level === 'warn').length;
+        log();
+        if (!errs && !warns) log(`  ${C.g}✓ ready to render${C.x}`);
+        else log(`  ${errs ? `${C.r}${errs} error${errs > 1 ? 's' : ''}${C.x}` : `${C.g}no errors${C.x}`}`
+                 + `${warns ? ` ${C.dim}·${C.x} ${C.y}${warns} warning${warns > 1 ? 's' : ''}${C.x}` : ''}`
+                 + `${errs ? '' : ` ${C.dim}— warnings do not stop a render${C.x}`}`);
+        // a non-zero exit is what makes this usable in a pre-publish script
+        if (errs) process.exit(1);
+        break;
+      }
+
       const taste = await loadTaste(ref, '.');
       const issues = audit(taste);
       log(`${C.b}${taste.name}${C.x} ${C.dim}(${taste.id})${C.x}`);
@@ -338,8 +511,11 @@ try {
       if (!file) throw new Error('takes: give a video document');
       const doc = await loadDoc(file);
       applyCanvasFlags(doc);
-      const taste = await loadTaste(str(flags.taste, '') || doc.taste, dirname(resolve(file)));
-      const grid = await resolveGrid(doc, flags);
+      const declared = await loadTaste(str(flags.taste, '') || doc.taste, dirname(resolve(file)));
+      const tempo = await resolveTempo(doc, flags);
+      const { grid } = tempo;
+      const taste = tempo.free ? freeCut(declared) : declared;
+      for (const w of tempo.warnings) log(`${C.y}warning: ${w}${C.x}`);
       const { clips, info, missing } = await probeClips(doc);
       const { timeline } = plan(doc, taste, grid, clips);
 

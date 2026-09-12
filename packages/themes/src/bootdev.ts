@@ -38,3 +38,15 @@ export const dusk: TasteProfile = {
 
 export const THEMES = { bootdev, dusk } as const;
 export type ThemeName = keyof typeof THEMES;
+
+/** What a document gets when it does not name a taste.
+ *
+ *  The schema defaults `taste` to the string "default" rather than to a theme
+ *  name, so that the house choice can move without rewriting every document
+ *  that relied on it. This is the one place that choice is made. */
+export const DEFAULT_TASTE: ThemeName = 'bootdev';
+
+/** Resolve an alias a document may legitimately carry to a real theme name.
+ *  Only "default" is aliased today; the identity case is the common one. */
+export const themeName = (ref: string): ThemeName | null =>
+  ref === 'default' ? DEFAULT_TASTE : ref in THEMES ? (ref as ThemeName) : null;

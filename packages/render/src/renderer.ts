@@ -92,6 +92,12 @@ export class Renderer {
     return new Resvg(svg, { fitTo: { mode: 'width', value: this.width }, font: this.fontCfg }).render().asPng();
   }
 
+  /** Rasterize at a width other than the canvas — for documents *about* a film
+   *  rather than frames of one, like a contact sheet. */
+  svgToPngAt(svg: string, width: number): Buffer {
+    return new Resvg(svg, { fitTo: { mode: 'width', value: Math.round(width) }, font: this.fontCfg }).render().asPng();
+  }
+
   /** Rasterize an SVG string that was produced elsewhere (e.g. cached). */
   svgToPixels(svg: string): Buffer {
     return new Resvg(svg, { fitTo: { mode: 'width', value: this.width }, font: this.fontCfg }).render().pixels;

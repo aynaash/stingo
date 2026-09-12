@@ -1,6 +1,6 @@
 Every command takes a video document except `beats` (an audio file), `taste` (a
-brand colour), `doctor` (a taste name or path), and `blocks` and `tastes`
-(nothing, or one block name).
+brand colour), and `blocks` and `tastes` (nothing, or one block name). `doctor`
+takes either a document or a taste, and does something different with each.
 
 ## render
 
@@ -22,6 +22,20 @@ stingo render script.yaml --taste dusk       # same script, different look
 stingo render script.yaml --no-camera        # skip decoding footage
 ```
 
+When the film has audio, the finished file is measured and the two numbers that
+matter are printed: integrated loudness against the taste's target, and how far
+the speech sits above the music bed.
+
+```
+    audio -14.2 LUFS · true peak -1.3 dBTP · speech +13.1 LU over music
+```
+
+Bad audio is what loses viewers, and it is the one fault a still cannot show
+you — a frame can be checked by looking at it, a mix can only be checked by
+listening to all of it, which nobody does on the tenth render. Speech below
+about 8 LU over the bed gets a warning with how many dB to drop
+`audio.musicGainDb` by. `--no-verify` skips the measurement.
+
 ## still
 
 ```bash
@@ -32,6 +46,46 @@ stingo still <doc> --frame 375 -o frame.png
 One frame, through the same pixel path as a render — same fonts, same texture
 pass, same camera compositing. The fastest way to check a layout, and it prints
 which scene the frame landed in.
+
+```bash
+stingo still <doc> --at 12.5 --guides -o frame.png
+```
+
+`--guides` draws the title-safe and action-safe boxes over the frame, plus the
+zones each platform covers with its own interface: in portrait, the column of
+buttons up the right edge and the caption-and-handle strip along the bottom.
+None of that furniture is in the frame you render, which is why a headline
+parked under the Shorts right rail looks fine in a still and is unreadable in
+the app — and you find out after publishing.
+
+Anything you need read belongs inside the title-safe box and outside the red
+zones. The overlay is never encoded into a video; it exists to be looked at.
+
+## sheet
+
+```bash
+stingo sheet <doc> -o sheet.png
+```
+
+A contact sheet: one still from the middle of every scene, in a grid, labelled
+with the scene id and its place on the timeline.
+
+Nobody can hold a six-minute video in their head, and scrubbing is a serial
+act — you see one moment at a time and have to remember the rest. Twelve frames
+side by side is a different kind of looking. It is how you notice that three
+scenes in a row are dark, that two of them say nearly the same thing, or that
+the one bright scene is in the wrong place.
+
+The frame is taken from the middle of each scene rather than the start, because
+at frame zero every entrance is still animating and a sheet of first frames is
+a sheet of half-drawn scenes.
+
+```bash
+stingo sheet <doc> --cols 4          # force the grid
+stingo sheet <doc> --width 3000      # bigger thumbnails
+stingo sheet <doc> --at 0.8          # later in each scene, 0..1
+stingo sheet <doc> --no-camera       # placeholders instead of footage
+```
 
 ## plan
 
@@ -45,6 +99,25 @@ a camera take.
 
 Use it before every long render. Finding out a scene is two seconds too short
 costs one second here and several minutes there.
+
+It also warns where a scene's `say` cannot be said in the time the scene has —
+with how many words to cut — and prints the take budget: every camera scene and
+the seconds of footage it needs.
+
+```
+  to camera 3 scenes · 0:21 of footage
+  01-hook 8s · 02-broke 7s · 03-verdict 6s
+```
+
+That is the line to write down before you sit in front of the camera. `plan`
+already knows how long each camera scene is; this is that arithmetic in a form
+you can keep next to you while shooting.
+
+A document whose `audio.music` does not exist still plans. `plan` renders
+nothing and decodes nothing — it needs a tempo, not audio — so a missing track
+is a warning, cuts fall back to free timing, and the command continues.
+Snapping to a nominal 120 BPM that no track has would give you a plan that is
+wrong in a way that looks right.
 
 ## preview
 
@@ -128,12 +201,38 @@ Without `--save` it prints the palette with contrast ratios and changes nothing.
 ## doctor
 
 ```bash
-stingo doctor <taste>
+stingo doctor <doc>          # everything a render needs
+stingo doctor <taste>        # the contrast audit
 ```
 
-Audits a profile against the house contrast floors — body 7:1, muted 4.5:1,
-accents 4.5:1 — and says which failures stingo repairs automatically at render
-time.
+Given a **document**, it checks everything a render needs in one pass: ffmpeg
+and its encoders, the font directory and whether the taste's three families are
+really loaded at the weights it asks for, the taste itself, the music track and
+whether a tempo can be found in it, every camera take and whether it is long
+enough for the scenes reading from it, every image and backdrop source, the
+timing, the narration fit, and whether the text fits its frames.
+
+The reason it exists is arithmetic. A check that throws on the first problem
+turns a session into one fix per run — install ffmpeg, run again, find the
+missing track, run again, find the missing take. Five problems is five runs to
+discover and five to confirm. Finding all of them at once costs the same work
+and takes one run.
+
+Every failing check names a fix, not just the fault:
+
+```
+  ✗ error  music     bed.mp3 does not exist
+           → point `audio.music` at a track, or remove the `audio:` block
+```
+
+Errors exit **1** and warnings do not, so it works as a pre-publish check in a
+script. A taste that will not resolve is reported as an error and the rest of
+the report continues against the default, because the other things you have to
+fix are worth knowing about in the same run.
+
+Given a **taste** — a built-in name or a path — it audits that profile against
+the house contrast floors: body 7:1, muted 4.5:1, accents 4.5:1, and says which
+failures stingo repairs automatically at render time.
 
 ## version
 
@@ -189,7 +288,11 @@ away from the code.
 | `--draft` | `ultrafast` at crf 30, for iterating |
 | `--no-camera` | draw camera placeholders instead of decoding footage |
 | `--no-hud` | hide the progress bar and scene counter |
-| `--at <seconds>` | which time, for `still` |
+| `--no-verify` | skip measuring the finished mix |
+| `--at <seconds>` | which time, for `still`; a 0–1 fraction for `sheet` |
 | `--frame <n>` | which frame, for `still` |
+| `--guides` | overlay safe areas and platform UI zones, for `still` |
+| `--width <n>` | sheet width in pixels (default 2000) |
+| `--cols <n>` | sheet columns; defaults to a grid chosen from the scene count |
 | `--port <n>` | preview server port |
 | `--debug` | print a stack trace on failure |

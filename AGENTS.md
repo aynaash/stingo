@@ -24,11 +24,23 @@ Without MCP, the CLI does the same things: `bun stingo <command>`.
 5. **`stingo_render`** — only once frames look right. Use `draft: true` while
    iterating.
 
+Without MCP the same loop is `stingo doctor` → `stingo plan` → `stingo still`
+→ `stingo sheet` → `stingo render`. `doctor` is the one to reach for first on a
+script you did not write: it checks ffmpeg, fonts, taste, music, takes, images,
+timing, narration fit and text fit in one pass and names a fix for each failure,
+rather than surfacing one problem per run.
+
 ### Things that are true and not obvious
 
 - **Look at frames.** A schema cannot tell you a headline wrapped badly, a
   highlighted chart bar is invisible against its background, or a scene is over
   before anyone could read it. One `stingo_still` call costs a second.
+- **Look at all of them at once.** `stingo sheet <doc> -o sheet.png` puts one
+  frame per scene in a grid. Three dark scenes in a row and two scenes saying
+  the same thing are invisible one still at a time and obvious in a grid.
+- **`stingo still --guides`** overlays the title-safe box and the zones each
+  platform covers with its own interface. Text under the Shorts right rail
+  renders perfectly and is unreadable in the app.
 - **Never set colours in a script.** Colour lives in the taste profile. If a
   script contains a hex code, that is a bug. Derive a profile instead:
   `stingo_derive_taste { brand: "#ff7a18" }`.
@@ -36,7 +48,10 @@ Without MCP, the CLI does the same things: `bun stingo <command>`.
   number of list items, the `say:` text — then clamped by the taste's pacing and
   snapped to the beat grid. Set `dur` only when the inferred length is wrong.
 - **Write `say:` even with no narration recorded.** It drives the length
-  estimate and gives the scene a stated purpose.
+  estimate and gives the scene a stated purpose. `plan` warns when a `say` needs
+  more seconds than its scene has, with how many words to cut — an explicit
+  `dur`, the taste's `sceneMax`, a camera take's own length or a snapped cut can
+  all make the words no longer fit.
 - **Scripts work before footage exists.** Camera scenes plan and preview with
   `takes/` empty; `noCamera: true` renders placeholders carrying the source
   timecode. Lock the edit first, shoot to fit it.
@@ -89,6 +104,11 @@ Read `README.md` first — the "Why it is built this way" section is the design.
 - **Blocks size from `ctx.stage`, never from raw pixels.** That is what makes a
   block work in portrait, landscape, square, and inside a split-screen panel
   without knowing which it is in.
+- **Never write a two-value `gap`.** satori reads `gap: "11px 48px"` as a single
+  value and applies the *first* to both axes, silently. Set `rowGap` and
+  `columnGap`. This cost a real bug: headline words sat a fifth of a space apart
+  and "It works" read as one word whose second half looked lighter, when both
+  words were the same face at the same weight the whole time.
 
 ### Before you claim a speedup
 

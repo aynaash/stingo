@@ -1,4 +1,4 @@
-import { Renderer, composite, box, TexturePass, fitText, layoutTokens, type El } from '@stingo/render';
+import { Renderer, composite, box, TexturePass, fitText, layoutTokens, measureLine, type El } from '@stingo/render';
 import { makeStage, T, substage, renderBlock, textureLayer, gridLayer, progressBar, sceneChip, renderBroll, brollDefs, initHighlighter,
   cameraPlacement, cameraMask, cameraChrome, contentRect,
   compositionRect, groundDefs, groundLayer, furnitureLayer, captionLayer, type BlockCtx, type Placement } from '@stingo/blocks';
@@ -122,6 +122,13 @@ export class Film {
         const spec = this.taste.type[kind];
         return layoutTokens(txt, this.renderer.metrics(spec.family, spec.weight),
           { size, tracking: spec.tracking }, maxWidth);
+      },
+      // measureLine on a single space gives the advance; the tracking on either
+      // side of it is what a measured line pays and a flexbox gap does not
+      space: (kind, size) => {
+        const spec = this.taste.type[kind];
+        const adv = measureLine(' ', this.renderer.metrics(spec.family, spec.weight), { size, tracking: 0 });
+        return Math.max(size * 0.12, adv + 2 * spec.tracking * size);
       },
       fit: (txt, kind, size, o) => {
         const spec = this.taste.type[kind];
@@ -288,6 +295,23 @@ export class Film {
     const px = await this.framePixels(frame);
     const { width, height } = this.doc.canvas;
     return rgbaToPng(px, width, height);
+  }
+
+  /** A frame with an SVG fragment composited on top, at canvas scale.
+   *
+   *  Overlays are for looking at, never for shipping: the encoder goes through
+   *  framePixels and never sees this. It is how `still --guides` draws safe
+   *  areas over a real frame instead of next to one. */
+  async framePngOverlaid(frame: number, overlay: string): Promise<Buffer> {
+    const png = await this.framePng(frame);
+    const { width, height } = this.doc.canvas;
+    return this.renderer.svgToPng(
+      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`
+      + ` width="${width}" height="${height}">`
+      + `<image x="0" y="0" width="${width}" height="${height}"`
+      + ` xlink:href="data:image/png;base64,${png.toString('base64')}"/>`
+      + overlay + `</svg>`,
+    );
   }
 }
 

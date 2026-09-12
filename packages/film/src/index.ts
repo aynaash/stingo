@@ -7,3 +7,5 @@ export * from './camera';
 export * from './captions';
 export * from './transition';
 export * from './backdrop';
+export * from './guides';
+export * from './sheet';

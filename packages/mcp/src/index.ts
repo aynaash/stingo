@@ -23,7 +23,7 @@ import { tmpdir } from 'node:os';
 import { parse as parseYaml } from 'yaml';
 
 import { loadDoc, loadTaste } from '@stingo/cli/src/load';
-import { Film, plan, renderVideo, probeClips } from '@stingo/film';
+import { Film, plan, renderVideo, probeClips, sayWarnings } from '@stingo/film';
 import { analyzeBeats, measureLoudness } from '@stingo/audio';
 import { THEMES, derive, audit, contrast, HOUSE } from '@stingo/themes';
 import { parseVideo, CANVAS_PRESETS } from '@stingo/schema';
@@ -100,16 +100,28 @@ async function prepare(a: any) {
   const taste = await loadTaste(a.taste || doc.taste, dirname(resolve(a.path ?? a.file)));
 
   let grid: BeatGrid = DEFAULT_GRID;
+  const notes: string[] = [];
+  let free = false;
   if (doc.audio.music) {
+    // a missing track never blocked planning, but it used to do so in silence,
+    // leaving the cut snapped to a nominal 120 BPM that no track has — a plan
+    // that is wrong in a way that looks right. Say so, and cut free instead.
     try {
       const b = await analyzeBeats(doc.audio.music, {
         bpm: typeof doc.audio.bpm === 'number' ? doc.audio.bpm : undefined,
       });
       grid = { bpm: b.bpm, offset: b.offset, beatsPerBar: b.beatsPerBar, onsets: b.onsets };
-    } catch { /* music is optional; a missing track should not block planning */ }
+    } catch (e: any) {
+      free = typeof doc.audio.bpm !== 'number';
+      notes.push(
+        `music ${doc.audio.music} could not be read — ${String(e.message).split('\n')[0]!.trim()}. `
+        + 'Cutting free and rendering without music; point `audio.music` at a track, or remove the `audio:` block',
+      );
+    }
   }
+  const cutting = free ? { ...taste, pacing: { ...taste.pacing, cutOn: 'free' as const } } : taste;
   const { clips, info, missing } = await probeClips(doc);
-  return { doc, taste, grid, clips, info, missing };
+  return { doc, taste: cutting, grid, clips, info, missing, notes };
 }
 
 export function createServer() {
@@ -124,7 +136,7 @@ export function createServer() {
   }, async (a: any) => {
     try {
       return await withScript(a, async (file) => {
-        const { doc, taste, missing } = await prepare({ ...a, file });
+        const { doc, taste, missing, notes } = await prepare({ ...a, file });
         const counts = doc.scenes.reduce<Record<string, number>>((m, s) => {
           m[s.block] = (m[s.block] ?? 0) + 1; return m;
         }, {});
@@ -134,6 +146,7 @@ export function createServer() {
           `taste "${taste.name}" · ${doc.scenes.length} scenes`,
           `blocks: ${Object.entries(counts).map(([k, v]) => `${k}×${v}`).join(', ')}`,
           doc.audio.music ? `music: ${basename(doc.audio.music)}` : 'no music',
+          ...notes.map((n) => `warning: ${n}`),
           ...missing.map((m) => `warning: camera source not readable — ${m}`),
         ].join('\n')));
       });
@@ -149,7 +162,7 @@ export function createServer() {
   }, async (a: any) => {
     try {
       return await withScript(a, async (file) => {
-        const { doc, taste, grid, clips, missing } = await prepare({ ...a, file });
+        const { doc, taste, grid, clips, missing, notes } = await prepare({ ...a, file });
         const { timeline, warnings } = plan(doc, taste, grid, clips);
         const beat = 60 / grid.bpm;
         const rows = timeline.cues.map((c) => {
@@ -165,7 +178,9 @@ export function createServer() {
           ...rows,
           '',
           `total ${fmtT(timeline.duration)} · ${timeline.frameCount} frames`,
+          ...notes.map((n) => `warning: ${n}`),
           ...warnings.map((w) => `warning: ${w}`),
+          ...sayWarnings(doc, taste, timeline).map((w) => `warning: ${w}`),
           ...missing.map((m) => `warning: camera source not readable — ${m}`),
         ].join('\n')));
       });

@@ -49,7 +49,9 @@ scenes:
 bunx stingo render film.yaml
 ```
 
-Fonts ship with the package, so there is nothing else to install.
+Fonts ship with the package, so there is nothing else to install. Every key
+above `scenes:` is optional — they are spelled out here so you can see where
+the shape, the frame rate and the look are set.
 
 ## Or run the example from a clone
 
@@ -156,10 +158,6 @@ a lookup.
 The smallest document that renders:
 
 ```yaml
-title: My first film
-canvas: { preset: vertical, fps: 30 }
-taste: bootdev
-
 scenes:
   - block: title
     text: It works
@@ -170,8 +168,32 @@ scenes:
 bun stingo render my.yaml
 ```
 
+That is the whole file. `title` defaults, the canvas defaults to vertical at
+30fps, and `taste` defaults to the house profile — so every line above the
+`scenes:` key in the earlier example was optional.
+
 Scene length is inferred from content and clamped by the taste's pacing, so you
 can leave `dur` off until a scene actually feels wrong.
+
+## Check it before you render it
+
+```bash
+bun stingo doctor my.yaml
+```
+
+One pass over everything a render needs: ffmpeg, the fonts your taste asks for,
+the taste itself, the music track, every camera take, every image, the timing,
+and whether your words fit their frames and their scenes. It reports all of it
+at once and names a fix for each failure, so you are not discovering one problem
+per render.
+
+```bash
+bun stingo sheet my.yaml -o sheet.png
+```
+
+And once there is more than a handful of scenes, a contact sheet — one frame
+from the middle of each, in a grid. Nobody can hold a six-minute video in their
+head, and scrubbing only ever shows you one moment at a time.
 
 ## Where to go next
 

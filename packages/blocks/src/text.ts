@@ -41,8 +41,18 @@ export function wordStack(content: string, c: BlockCtx, opts: {
   const gap = taste.motion.stagger;
   const base = opts.delay ?? 0;
   const emph = new Set((opts.emphasis ?? []).map((e) => e.toLowerCase().replace(/[.,!?:;]/g, '')));
+  // rowGap and columnGap are set separately on purpose. satori reads the
+  // two-value `gap` shorthand as a single value and applies the *first* to both
+  // axes, so `gap: "11px 48px"` silently laid these words a fifth of a space
+  // apart — close enough that "It works" read as one word whose second half
+  // appeared to change weight. There is no warning; the shorthand just loses.
+  //
+  // The column gap is the face's own space rather than a fraction picked by
+  // eye, because that is the width the fit above measured with.
   return box({
-    flexWrap: 'wrap', gap: `${size * 0.12}px ${size * 0.3}px`,
+    flexWrap: 'wrap',
+    rowGap: `${(size * 0.12).toFixed(2)}px`,
+    columnGap: `${c.space(kind, size).toFixed(2)}px`,
     justifyContent: opts.align === 'left' ? 'flex-start' : 'center',
     width: '100%',
   },

@@ -73,3 +73,54 @@ export function plan(doc: VideoDoc, taste: TasteProfile, grid: BeatGrid = DEFAUL
 
   return { timeline: new Timeline(cues, grid, doc.canvas.fps), warnings };
 }
+
+/** Warn where a scene's narration will not fit the time the scene has.
+ *
+ *  `say` sets a scene's length, so most of the time it fits by construction.
+ *  It stops fitting when something else wins: an explicit `dur`, the taste's
+ *  `sceneMax` ceiling, a camera take that owns its own length, or a cut snapped
+ *  back onto the grid. In all four cases the overrun is silent — the video
+ *  renders, the scene is simply shorter than the words take to say.
+ *
+ *  This is the failure captions exist to expose, so it is reported before the
+ *  render rather than discovered in one. */
+export function sayWarnings(doc: VideoDoc, taste: TasteProfile, timeline: Timeline): string[] {
+  const out: string[] = [];
+  const { wordsPerMinute: wpm, breath } = taste.pacing;
+
+  timeline.cues.forEach((cue) => {
+    const scene = doc.scenes[cue.index] as Scene & { say?: string };
+    const say = scene?.say;
+    if (typeof say !== 'string' || !say.trim()) return;
+
+    const needed = speakDuration(say, wpm, breath);
+    // a fifth of a second is inside the error of any words-per-minute estimate,
+    // so warning on it would cry wolf on scenes that are effectively exact
+    if (needed <= cue.dur + 0.2) return;
+
+    const over = needed - cue.dur;
+    const words = say.trim().split(/\s+/).filter(Boolean).length;
+    // what to cut is the actionable number; the seconds are the evidence
+    const cut = Math.ceil((over * wpm) / 60);
+    out.push(
+      `scene ${cue.index} ("${cue.id}") says ${words} words in ${cue.dur.toFixed(1)}s — `
+      + `that is ${needed.toFixed(1)}s of speech at ${wpm} wpm, ${over.toFixed(1)}s over. `
+      + `Cut about ${cut} word${cut === 1 ? '' : 's'}, or set \`dur: ${Math.ceil(needed)}\` on the scene`,
+    );
+  });
+  return out;
+}
+
+/** Per-scene shooting lengths for the takes a script needs, in the order they
+ *  are shot in. Printed before a shoot, so the camera scenes have a number on
+ *  them while the camera is still set up. */
+export interface TakeBudget { index: number; id: string; dur: number; src?: string; say?: string }
+
+export function takeBudget(doc: VideoDoc, timeline: Timeline): TakeBudget[] {
+  return timeline.cues
+    .filter((c) => (doc.scenes[c.index] as Scene | undefined)?.camera)
+    .map((c) => {
+      const scene = doc.scenes[c.index] as Scene & { say?: string };
+      return { index: c.index, id: c.id, dur: c.dur, src: scene.camera?.src, say: scene.say };
+    });
+}

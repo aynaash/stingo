@@ -37,6 +37,13 @@ safe area with the spoken word picked out, plus `.srt` and `.vtt` sidecars
 written beside the video. Still estimated rather than force-aligned — against a
 recorded take it will drift, which is what **Voice** below fixes.
 
+**Forced alignment.** The next thing worth building, ahead of most of what
+follows. Estimated caption timing is fine against TTS generated from the same
+words and drifts against a real take, and drifting captions look worse than no
+captions — so for talking-head work this gates the feature rather than polishing
+it. Where a take's own transcript exists it should replace the estimate; the
+shape of a cue is the same either way, so nothing downstream changes.
+
 **Voice.** `say:` already drives scene length. It should also be able to *become*
 the narration, through a TTS provider you choose, so a script with no recorded
 audio still produces a narrated film.

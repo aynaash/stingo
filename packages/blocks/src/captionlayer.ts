@@ -40,7 +40,10 @@ export function captionLayer(v: CaptionView, c: BlockCtx): El {
   },
     box({
       flexWrap: 'wrap', justifyContent: 'center',
-      gap: `${size * 0.16}px ${size * 0.34}px`,
+      // satori applies only the first value of a two-value `gap`, so both axes
+      // are named — see the note in text.ts/wordStack
+      rowGap: `${(size * 0.16).toFixed(2)}px`,
+      columnGap: `${(size * 0.34).toFixed(2)}px`,
       maxWidth: st.contentW,
       // a scrim keeps the words legible over a bright frame without a hard box
       paddingLeft: size * 0.6, paddingRight: size * 0.6,

@@ -22,6 +22,14 @@ export interface BlockCtx {
   /** The tokens that will actually be laid out at this size — words, with any
    *  word too long for the line already broken. Render these, not a raw split. */
   tokens: (text: string, kind: 'display' | 'body' | 'mono', size: number, maxWidth: number) => string[];
+  /** Width of the gap between two words, in pixels, as the measurement assumed
+   *  it: the face's own space advance plus the tracking either side of it.
+   *
+   *  A block that lays words out as separate flex children has to use this for
+   *  its column gap. Anything else and the wrap that was fitted is not the wrap
+   *  that gets drawn — and at display sizes in a monospace face, a gap narrower
+   *  than a space makes two words read as one. */
+  space: (kind: 'display' | 'body' | 'mono', size: number) => number;
   /** scene index, for deterministic per-scene variation */
   index: number;
 }

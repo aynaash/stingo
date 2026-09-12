@@ -162,7 +162,10 @@ L.push('as you actually spoke.');
 
 const md = L.join('\n') + '\n';
 if (outFile) {
-  await Bun.write(resolve(dirname(resolve(file)), outFile), md);
+  // Resolve -o against the working directory, the way every other tool does.
+  // Resolving it against the document's folder turned `-o examples/x/SHOOT.md`
+  // run from the repo root into examples/x/examples/x/SHOOT.md.
+  await Bun.write(resolve(outFile), md);
   console.log(`\x1b[32m✓\x1b[0m ${outFile} — ${takes.size} takes, ${mmss(timeline.duration)}`);
 } else {
   console.log(md);

@@ -51,6 +51,12 @@ export const PAGES: Page[] = [
     section: 'Reference',
   },
   {
+    slug: 'claude',
+    title: 'Written by Claude',
+    blurb: 'Every line of it, and what a model got wrong along the way.',
+    section: 'Under the hood',
+  },
+  {
     slug: 'internals',
     title: 'How it works',
     blurb: 'Pure frames, satori and resvg, the beat grid, and where the milliseconds went.',

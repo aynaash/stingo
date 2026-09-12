@@ -3,7 +3,7 @@
 Generated from `video.yaml`. Do not edit by hand — re-run:
 
 ```bash
-bun run tools/shootlist.ts examples/building-stingo/video.yaml -o SHOOT.md
+bun run tools/shootlist.ts examples/building-stingo/video.yaml -o examples/building-stingo/SHOOT.md
 ```
 
 **14 takes** · cut runs 7:32 · 1920×1080 @ 30fps · 128.9 BPM

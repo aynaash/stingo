@@ -248,10 +248,12 @@ ${topbar(base)}
 
 <section class="section wrap">
   <h2>Written by Claude, start to finish</h2>
-  <p>Every line of stingo — the renderer, the beat detection, the tests, this
-  page — was written by Claude, Anthropic's coding model, working from
-  direction by <a href="https://github.com/aynaash" target="_blank" rel="noopener">Hersi</a>.
-  Hersi decides what it should do and what good means; Claude does the building.</p>
+  <p>Every line of stingo — the renderer, the beat detection, the font parser,
+  the tests, this page — was written by Claude, Anthropic's coding model,
+  working from direction by <a href="https://github.com/aynaash" target="_blank" rel="noopener">Hersi</a>.
+  Not one line was typed by a human. Hersi decided what it should do and what
+  good meant; Claude did the building.
+  <a href="${u('claude')}">Including what it got wrong</a>.</p>
   <div class="claims">
     <div>
       <h3>The measurements are real</h3>

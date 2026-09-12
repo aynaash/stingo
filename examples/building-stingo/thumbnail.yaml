@@ -1,0 +1,42 @@
+# YouTube thumbnails, rendered by the thing the video is about.
+#
+# 1280x720 is what YouTube wants. Each scene is one candidate — render a still
+# of each and pick:
+#
+#   stingo still examples/building-stingo/thumbnail.yaml --at 1  -o thumb-a.png --no-hud
+#   stingo still examples/building-stingo/thumbnail.yaml --at 5  -o thumb-b.png --no-hud
+#   stingo still examples/building-stingo/thumbnail.yaml --at 9  -o thumb-c.png --no-hud
+#
+# A thumbnail is read at about 350px wide in a sidebar. If it does not survive
+# being shrunk to a thumbnail of itself, it is the wrong thumbnail.
+
+title: thumbnails
+canvas: { width: 1280, height: 720, fps: 30 }
+taste: ./thumbnail.taste.json
+
+scenes:
+  # A — the claim, plainly
+  - block: statement
+    plain: true
+    dur: 4s
+    text: A video is a text file
+    emphasis: [text, file]
+    bg: { kind: grid, opacity: 0.45 }
+
+  # B — the number, which reads at any size
+  - block: stat
+    plain: true
+    dur: 4s
+    value: 33ms
+    label: per frame, no browser
+    sub: satori and resvg, straight into ffmpeg
+    bg: { kind: pulse, opacity: 0.5 }
+
+  # C — the part nobody else can say
+  - block: title
+    plain: true
+    dur: 4s
+    kicker: written entirely by claude
+    text: I did not write a line of this
+    sub: I decided what it should do. It did the building.
+    bg: { kind: mesh, opacity: 0.55 }

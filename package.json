@@ -15,7 +15,9 @@
     "mcp": "bun run packages/mcp/bin/stingo-mcp.ts",
     "gallery": "bun run tools/gallery.ts",
     "blockdocs": "bun run tools/blockdocs.ts",
-    "blockdocs:check": "bun run tools/blockdocs.ts --check"
+    "blockdocs:check": "bun run tools/blockdocs.ts --check",
+    "ingest": "bun run tools/ingest.ts",
+    "shootlist": "bun run tools/shootlist.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

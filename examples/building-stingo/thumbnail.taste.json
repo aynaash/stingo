@@ -1,0 +1,78 @@
+{
+  "id": "thumb",
+  "name": "Thumbnail",
+  "palette": {
+    "bg": "#130905",
+    "surface": "#271004",
+    "surfaceAlt": "#341503",
+    "border": "#4c240c",
+    "text": "#fef1ea",
+    "muted": "#a9826e",
+    "accent": "#ef7e39",
+    "accent2": "#2ecaf5",
+    "warn": "#f0bb3b",
+    "danger": "#ff8880",
+    "ok": "#74c878"
+  },
+  "type": {
+    "display": {
+      "family": "JetBrains Mono",
+      "weight": 800,
+      "tracking": -0.035,
+      "lineHeight": 1.04,
+      "transform": "none"
+    },
+    "body": {
+      "family": "Inter",
+      "weight": 400,
+      "tracking": -0.01,
+      "lineHeight": 1.44,
+      "transform": "none"
+    },
+    "mono": {
+      "family": "JetBrains Mono",
+      "weight": 400,
+      "tracking": 0,
+      "lineHeight": 1.55,
+      "transform": "none"
+    },
+    "scale": 2.0
+  },
+  "motion": {
+    "personality": "snappy",
+    "enter": 0.42,
+    "exit": 0.26,
+    "stagger": 0.072,
+    "ease": "expo.out",
+    "spring": {
+      "stiffness": 195,
+      "damping": 17,
+      "mass": 1
+    },
+    "travel": 56
+  },
+  "pacing": {
+    "sceneMin": 2.8,
+    "sceneMax": 13,
+    "wordsPerMinute": 158,
+    "cutOn": "bar",
+    "breath": 0.32
+  },
+  "texture": {
+    "grain": 0.02,
+    "scanlines": 0,
+    "vignette": 0.55,
+    "glow": 0.45,
+    "grid": 0.0,
+    "cornerRadius": 18
+  },
+  "transition": {
+    "kind": "fade",
+    "duration": 0.2
+  },
+  "music": {
+    "energy": "high",
+    "duckDb": -13,
+    "targetLufs": -14
+  }
+}

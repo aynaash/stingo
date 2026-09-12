@@ -94,6 +94,46 @@ is the thing this is meant to avoid.
 If a take's sound is unusable, set `mute: true` on that scene and put the words
 in `audio.vo` instead.
 
+## On an iPhone
+
+A phone on a stand is enough. What matters is what it hands you afterwards.
+
+**Settings, once:**
+
+- *Settings → Camera → Formats → **Most Compatible***. The default is HEVC, which
+  decodes several times slower per frame — and a render touches every frame of
+  every take. `stingo ingest` transcodes anyway, but this saves it work.
+- *Record Video → **1080p at 30 fps***. 4K gives you nothing here: the long video
+  is 1920×1080, so 4K is downscaled and only costs transfer time. 30 fps matches
+  the project's frame rate; 60 gets thrown away.
+- **Cinematic mode off.** It fakes depth of field and racks focus on its own,
+  usually to the wrong thing.
+
+**Before each take:** press and hold on your face until *AE/AF LOCK* appears.
+Without it the phone rebalances exposure mid-sentence and the cut shows it.
+
+**Position.** Lens at eye height, not below — a phone on a low stand shoots up
+your nose. Sit close: `pip` scenes land in a ~500 px inset, so a wide shot is a
+dot. Frame as the shot list says for each take.
+
+**Sound.** The phone's mic is fine at arm's length in a quiet room with soft
+things in it. Wired earbuds with a mic are better and cost nothing. What kills a
+take is reverb — a bare room with hard walls cannot be fixed afterwards. Record
+one test take and listen on headphones before shooting all fourteen.
+
+**Shoot in shot-list order** and keep one file per take. Delete bad attempts on
+the phone, so what lands on the machine is the keepers in order.
+
+**Then bring them over** — AirDrop, or a cable — into any folder, and:
+
+```bash
+bun run tools/ingest.ts examples/building-stingo/video.yaml ~/Desktop/takes
+```
+
+That prints the plan: which clip becomes which take, and whether any is shorter
+than its scene needs. Nothing is written until you add `--apply`, which bakes the
+rotation in, crops to frame size, and re-encodes to H.264 with 48 kHz audio.
+
 ## Before you commit to a render
 
 ```bash

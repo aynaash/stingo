@@ -30,6 +30,11 @@ export const BASE_FIELDS = {
   /** override the taste's cut behaviour for this scene. Talking-head scenes
    *  default to `free`: snapping speech to a downbeat clips words. */
   cut: z.enum(['free', 'beat', 'bar']).optional(),
+  /** Drop the art direction for this scene: no anchored composition, no rule,
+   *  no corner marks, no scene numeral. For frames that are not part of a film
+   *  — a thumbnail, a title card, an exported still — where furniture that
+   *  orients a viewer through eight minutes is just clutter. */
+  plain: z.boolean().optional(),
 } as const;
 
 export type BaseScene = z.infer<z.ZodObject<typeof BASE_FIELDS>> & { block: string };

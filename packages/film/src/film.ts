@@ -113,7 +113,8 @@ export class Film {
 
     // A split camera already reserves space, so composition stands aside for it.
     // Otherwise text-forward blocks are anchored off-centre — see artdirect.
-    const rect = (cam ? contentRect(cam, stage) : null) ?? compositionRect(scene.block, stage);
+    const rect = (cam ? contentRect(cam, stage) : null)
+      ?? (scene.plain ? null : compositionRect(scene.block, stage));
     const ctx: BlockCtx = {
       t: hit.local, dur: hit.cue.dur, abs: t, stage: rect ? substage(stage, rect.w, rect.h) : stage,
       taste: this.taste, grid: this.grid, family: (n) => this.renderer.family(n), index: hit.cue.index,
@@ -216,7 +217,7 @@ export class Film {
       : `<rect width="${width}" height="${height}" fill="${this.taste.palette.bg}"/>`
         + groundLayer(full)
         + (cfg.kind === 'grid' ? '' : gridLayer(ctx)) + bg
-        + furnitureLayer(full, rect);
+        + (scene.plain ? '' : furnitureLayer(full, rect));
     let defs = brollDefs(this.taste.palette, width, height) + tex.defs
       + groundDefs(full, hit.cue.index);
     let infront = tex.infront + (move.overlay ?? '');

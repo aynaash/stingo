@@ -205,7 +205,7 @@ A document can be a module that default-exports a film. You get types, loops,
 and real composition instead of hand-written YAML:
 
 ```ts
-import { film, title, code, list, outro } from 'stingo';
+import { film, title, code, list, outro } from '@hersidev/stingo';
 
 const MISTAKES = [
   'A goroutine nobody receives from leaks forever',

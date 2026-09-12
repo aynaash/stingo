@@ -527,7 +527,7 @@ countdown(5).label('until launch').bg('pulse')
 here:
 
 ```ts
-import { defineBlock } from 'stingo';
+import { defineBlock } from '@hersidev/stingo';
 export default defineBlock({ name: 'myblock', /* … */ });
 ```
 

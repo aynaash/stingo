@@ -53,14 +53,14 @@ Full setup, every tool, and the guards: **[Connect your AI](https://aynaash.gith
 ## Or write it yourself
 
 ```bash
-bun add stingo          # library + `stingo` CLI
+bun add @hersidev/stingo   # library + `stingo` and `stingo-mcp` commands
 ```
 
 A typed script:
 
 ```ts
 // film.ts
-import { film, title, code, stat, outro } from 'stingo';
+import { film, title, code, stat, outro } from '@hersidev/stingo';
 
 export default film('Goroutines in ninety seconds')
   .vertical()
@@ -159,7 +159,7 @@ Everything the CLI uses is exported from the package, so you can drive the
 pipeline yourself:
 
 ```ts
-import { Film, renderVideo, plan, derive, analyzeBeats, THEMES } from 'stingo';
+import { Film, renderVideo, plan, derive, analyzeBeats, THEMES } from '@hersidev/stingo';
 
 const { taste } = derive({ id: 'mine', brand: '#ff6b35', mode: 'dark', mood: 'bouncy' });
 const grid = await analyzeBeats('./track.mp3');

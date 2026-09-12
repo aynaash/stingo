@@ -9,32 +9,25 @@ read it. `stingo_still` returns the PNG itself, so the model can check.
 
 ## Connect it
 
-In a clone of the repository, `.mcp.json` is already there — Claude Code picks
-it up:
-
-```json
-{
-  "mcpServers": {
-    "stingo": {
-      "command": "bun",
-      "args": ["run", "packages/mcp/bin/stingo-mcp.ts"]
-    }
-  }
-}
-```
-
-From anywhere else, point at the installed binary:
+Point your agent at the published package:
 
 ```json
 {
   "mcpServers": {
     "stingo": {
       "command": "bunx",
-      "args": ["--bun", "stingo-mcp"]
+      "args": ["--bun", "--package=@hersidev/stingo", "stingo-mcp"]
     }
   }
 }
 ```
+
+`--package` is needed because the binary and the package have different names:
+npm would not accept `stingo` as a package name, so the library publishes under
+a scope while the commands stay `stingo` and `stingo-mcp`.
+
+Working in a clone of the repository instead? `.mcp.json` is already there and
+Claude Code picks it up, no install required.
 
 It speaks MCP over stdio. ffmpeg still has to be on the `PATH`.
 

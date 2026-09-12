@@ -40,8 +40,8 @@ claude  ⏺ stingo_docs      script, blocks
   const mcpConfig = `{
   "mcpServers": {
     "stingo": {
-      "command": "bun",
-      "args": ["run", "packages/mcp/bin/stingo-mcp.ts"]
+      "command": "bunx",
+      "args": ["--bun", "--package=@hersidev/stingo", "stingo-mcp"]
     }
   }
 }`;
@@ -87,9 +87,9 @@ ${topbar(base)}
 
 <section class="section wrap">
   <h2>Three lines, and your agent can render video</h2>
-  <p>The MCP server runs from a clone today. It hands an agent eleven tools:
-  read the documentation, validate a script, resolve the timeline, render a
-  frame, render the film.</p>
+  <p>Install it and point your agent at it. Eleven tools: read the
+  documentation, validate a script, resolve the timeline, render a frame,
+  render the film.</p>
   <figure class="code" data-lang="json">${hl(mcpConfig, 'json')}</figure>
   <p>The tool that matters is <code>stingo_still</code> — it returns the PNG
   itself, not a path. A model that can see the frame it just wrote catches what

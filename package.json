@@ -35,7 +35,7 @@
     "d3-shape": "^3.2.0",
     "satori": "^0.33.4",
     "shiki": "^4.4.3",
-    "stingo": "workspace:*",
+    "@hersidev/stingo": "workspace:*",
     "yaml": "^2.9.0",
     "zod": "^4.6.2",
     "@stingo/mcp": "workspace:*"

@@ -3,7 +3,7 @@ import '@stingo/blocks';
 import { parseVideo, blockDuration, blockBroll, hasBlock } from '@stingo/schema';
 import { Film, plan, estimateDuration } from '@stingo/film';
 import { THEMES } from '@stingo/themes';
-import { diagram, film } from 'stingo';
+import { diagram, film } from '@hersidev/stingo';
 
 const grid = { bpm: 120, offset: 0, beatsPerBar: 4 };
 const doc = (scene: any, canvas: any = { width: 300, height: 533, fps: 30 }) =>

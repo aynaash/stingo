@@ -1,5 +1,5 @@
 {
-  "name": "stingo",
+  "name": "@hersidev/stingo",
   "version": "0.1.0",
   "description": "Let your AI make the video. Declarative video for engineers: a script plus a taste profile render to MP4, with cuts that land on the beat and talking-head takes composited in.",
   "type": "module",

@@ -26,7 +26,7 @@
       "@stingo/studio": ["./packages/studio/src/index.ts"],
       "@stingo/cli": ["./packages/cli/src/index.ts"],
       "@stingo/mcp": ["./packages/mcp/src/index.ts"],
-      "stingo": ["./packages/stingo/src/index.ts"]
+      "@hersidev/stingo": ["./packages/stingo/src/index.ts"]
     }
   },
   "include": ["packages/*/src/**/*.ts", "tools/**/*.ts", "test/**/*.ts", "examples/**/*.ts"],

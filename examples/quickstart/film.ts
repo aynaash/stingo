@@ -1,4 +1,4 @@
-import { film, title, statement, code, terminal, stat, list, chart, outro } from 'stingo';
+import { film, title, statement, code, terminal, stat, list, chart, outro } from '@hersidev/stingo';
 
 /** The code-first path. Run it with:
  *

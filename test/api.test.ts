@@ -1,7 +1,7 @@
 import { expect, test, describe } from 'bun:test';
-import { film, title, statement, code, terminal, stat, list, chart, quote, compare, broll, outro, VERSION } from 'stingo';
-import { plan, Film } from 'stingo';
-import { THEMES } from 'stingo';
+import { film, title, statement, code, terminal, stat, list, chart, quote, compare, broll, outro, VERSION } from '@hersidev/stingo';
+import { plan, Film } from '@hersidev/stingo';
+import { THEMES } from '@hersidev/stingo';
 
 const grid = { bpm: 120, offset: 0, beatsPerBar: 4 };
 
@@ -10,7 +10,7 @@ describe('public entry point', () => {
     expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
   test('re-exports the whole pipeline from one import', async () => {
-    const mod = await import('stingo');
+    const mod = await import('@hersidev/stingo');
     for (const name of ['film', 'Film', 'renderVideo', 'plan', 'derive', 'audit', 'analyzeBeats',
                         'Encoder', 'Renderer', 'interpolate', 'spring', 'THEMES', 'HOUSE', 'VideoDoc']) {
       expect(mod, name).toHaveProperty(name);

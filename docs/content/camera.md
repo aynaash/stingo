@@ -164,7 +164,7 @@ they cannot invent picture outside what you shot.
 ## In TypeScript
 
 ```ts
-import { film, camera, code } from 'stingo';
+import { film, camera, code } from '@hersidev/stingo';
 
 export default film('Launch')
   .horizontal()

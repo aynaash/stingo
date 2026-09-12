@@ -6,6 +6,30 @@ few lines rather than a narrative.
 
 This is the path when that happens.
 
+## The package is scoped, and the reason matters
+
+npm refuses the name `stingo`:
+
+```
+403 Package name too similar to existing package string;
+try renaming your package to '@hersidev/stingo'
+```
+
+That is npm's typosquatting guard — `stingo` is two edits from `string`. It
+cannot be argued with from the CLI, so the library publishes as
+**`@hersidev/stingo`** while the binaries stay `stingo` and `stingo-mcp`, and
+every other surface — the repository, the docs, the name itself — is unchanged.
+
+One consequence worth remembering: `bunx` resolves a *package* name, so
+`bunx stingo-mcp` does not work. The MCP config needs the package spelled out:
+
+```json
+{ "command": "bunx", "args": ["--bun", "--package=@hersidev/stingo", "stingo-mcp"] }
+```
+
+Scoped packages are private by default, hence `publishConfig.access: public`
+in the manifest.
+
 ## A trap worth knowing about
 
 **npm silently drops bin entries whose value starts with `./`.** Not an error —

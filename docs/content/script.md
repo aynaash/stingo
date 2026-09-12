@@ -185,6 +185,51 @@ bg: { kind: orbits, opacity: 0.55, speed: 0.8, seed: 3 }
 Leave `bg` off and each block picks a sensible default, so a scene never sits
 on flat colour.
 
+## Your own media behind a scene
+
+Give `bg` a `src` and it plays your footage or your picture instead of a
+generator. Everything else about the scene is unchanged.
+
+```yaml
+- block: title
+  text: Shipping on Friday
+  bg: { src: ./b-roll/office.mp4, from: 4s, scrim: 0.6 }
+
+- block: statement
+  text: The numbers after one week.
+  bg: { src: ./shots/dashboard.png, fit: cover, zoom: 1.2 }
+```
+
+| Field | Type | Default | |
+|---|---|---|---|
+| `src` | path | — | a clip or a still; setting it ignores `kind` |
+| `from` | time | `0` | in-point within the clip |
+| `fit` | `cover` · `contain` | `cover` | crop to fill, or letterbox |
+| `zoom` | 1–4 | `1` | push in past the fit |
+| `offsetX` / `offsetY` | −1–1 | `0` | pan, as a fraction of the frame |
+| `mirror` | boolean | `false` | |
+| `scrim` | 0–1 | `0.55` | darken it so type stays readable |
+| `loop` | boolean | `true` | repeat a clip shorter than the scene |
+
+A still and a clip take the same path — a picture is a one-frame clip that
+holds, which is what a backdrop wants anyway. `loop: false` freezes on the last
+frame instead of repeating.
+
+**On `scrim`.** A taste profile guarantees contrast between the colours it
+chooses, and it cannot make that promise about your footage — stingo has no idea
+what is in the frame. So the scrim defaults high rather than to nothing. Turn it
+down once you have looked at a still:
+
+```bash
+stingo still script.yaml --at 3 -o check.png
+```
+
+**Cost.** A backdrop is composited into the rasterised frame rather than placed
+in the SVG, so it is *cheaper* than a procedural background, not dearer —
+measured at 1080×1920, an image backdrop is about 138 ms a frame against 192 ms
+for the `grid` generator. That is the opposite of the `image` *block*, which
+does go through the SVG and pays for it.
+
 ## Entrance and exit
 
 ```yaml

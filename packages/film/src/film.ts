@@ -6,6 +6,7 @@ import { Timeline, clamp, interpolate, toSeconds, type BeatGrid, DEFAULT_GRID } 
 import { Broll, blockBroll, type VideoDoc, type TasteProfile, type Scene } from '@stingo/schema';
 import { plan, type ClipTable } from './plan';
 import { captionCues, captionAt, type CaptionCue } from './captions';
+import { transitionFrame, type TransitionKind } from './transition';
 import { rgbaToPng } from './png';
 import { CameraPass, hexRgb, type CameraCut } from './camera';
 
@@ -16,6 +17,8 @@ interface Composition {
   infront: string;
   mask?: { id: string; body: boolean };
   cut: CameraCut | null;
+  /** a transition effect SVG cannot express, applied after rasterising */
+  pixel?: (px: Buffer, w: number, h: number) => void;
 }
 
 export interface FilmOpts {
@@ -123,22 +126,34 @@ export class Film {
     const bg = renderBroll(hit.local, { w: width, h: height, palette: this.taste.palette, cfg, dur: hit.cue.dur });
     const tex = textureLayer(ctx);
 
-    // scene-boundary dip: brief darkening across the cut reads as an intentional edit
     const trans = this.taste.transition;
-    let dip = '';
-    if (trans.kind === 'fade' && trans.duration > 0) {
-      const inP = interpolate(hit.local, [0, trans.duration], [1, 0]);
-      const outP = interpolate(hit.local, [hit.cue.dur - trans.duration, hit.cue.dur], [0, 1]);
-      // element-level enter/exit already carries the cut; the frame dip is a
-      // seasoning on top, so keep it well short of a blackout
-      const amt = clamp(Math.max(inP, hit.cue.index === this.timeline.cues.length - 1 ? 0 : outP)) * 0.42;
-      if (amt > 0.002) dip = `<rect width="${width}" height="${height}" fill="${this.taste.palette.bg}" opacity="${amt.toFixed(3)}"/>`;
-    }
+    const move = transitionFrame({
+      kind: trans.kind as TransitionKind,
+      local: hit.local,
+      sceneDur: hit.cue.dur,
+      duration: trans.duration,
+      isFirst: hit.cue.index === 0,
+      isLast: hit.cue.index === this.timeline.cues.length - 1,
+      index: hit.cue.index,
+      w: width, h: height,
+      palette: this.taste.palette,
+    });
 
     let content = renderBlock(scene, ctx);
     if (rect) {
       content = box({ width, height, position: 'relative' },
         box({ position: 'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h }, content));
+    }
+
+    // A transition moves the whole composed scene, so it wraps everything —
+    // including the composition rect. Applied inside that rect instead, the
+    // scene slides within its own panel and the move is invisible.
+    if (move.transform || move.opacity != null) {
+      content = box({
+        width, height,
+        ...(move.transform ? { transform: move.transform } : {}),
+        ...(move.opacity != null ? { opacity: move.opacity } : {}),
+      }, content);
     }
 
     // Overlays are appended to the OUTER, full-frame box, but `ctx.stage` is the
@@ -182,7 +197,7 @@ export class Film {
       + furnitureLayer(full, rect);
     let defs = brollDefs(this.taste.palette, width, height) + tex.defs
       + groundDefs(full, hit.cue.index);
-    let infront = tex.infront + dip;
+    let infront = tex.infront + (move.overlay ?? '');
     let cut: CameraCut | null = null;
     let mask: { id: string; body: boolean } | undefined;
 
@@ -201,7 +216,7 @@ export class Film {
       infront += cameraChrome(placement, cam, ctx);
     }
 
-    return { el, defs, behind, infront, mask, cut };
+    return { el, defs, behind, infront, mask, cut, pixel: move.pixel };
   }
 
   /** SVG for one frame. Camera takes appear as placeholders: an SVG document
@@ -215,9 +230,13 @@ export class Film {
   /** Raw RGBA pixels for one frame — the encoder's input. */
   async framePixels(frame: number): Promise<Buffer> {
     const t = frame / this.fps;
-    const { el, defs, behind, infront, mask, cut } = this.compose(t, true);
+    const { el, defs, behind, infront, mask, cut, pixel } = this.compose(t, true);
     const svg = composite(await this.renderer.toSvg(el), { defs, behind, infront, mask });
-    const px = await this.camera.apply(this.renderer.svgToPixels(svg), this.doc.canvas.width, this.doc.canvas.height, cut);
+    const { width, height } = this.doc.canvas;
+    const px = await this.camera.apply(this.renderer.svgToPixels(svg), width, height, cut);
+    // the glitch transition tears the finished frame, so it runs after the take
+    // is composited but before the film grain settles over everything
+    pixel?.(px, width, height);
     return this.texture.apply(px);
   }
 

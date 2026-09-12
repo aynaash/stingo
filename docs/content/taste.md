@@ -135,9 +135,35 @@ transition: { kind: fade, duration: 0.25 }
 music: { energy: medium, duckDb: -12, targetLufs: -14 }
 ```
 
-`kind` is `cut` · `fade` · `wipe` · `whip` · `glitch` · `slide` — though only
-**`cut` and `fade` are implemented today**. The other four are accepted by the
-schema and render as a cut.
+`kind` is `cut` · `fade` · `wipe` · `whip` · `glitch` · `slide`, and `duration`
+is **half** the move.
+
+| | |
+|---|---|
+| `cut` | nothing; the scenes simply change |
+| `fade` | a brief dip toward the background colour |
+| `wipe` | a bar sweeps across, accent edge leading |
+| `whip` | the scene is thrown sideways under a directional streak |
+| `slide` | the scene is pushed sideways |
+| `glitch` | channel split and torn bands |
+
+stingo renders one scene per frame, so a true crossfade — two scenes alive at
+once — would double the cost of every boundary. Each move is split instead: the
+outgoing scene plays the first half over its last `duration` seconds, the
+incoming scene plays the second half over its first, and both push the same way
+so the pair reads as one gesture. That is why `duration: 0.25` gives a half-second
+transition.
+
+`glitch` is the exception that runs on pixels rather than markup, because SVG
+cannot express a channel split cheaply. It is seeded from the scene index and
+the frame, so every worker in a parallel render tears the same frame identically.
+
+One interaction to know about: a block's own elements already fade out over
+`motion.exit` at the end of a scene. With a short scene and a long `motion.exit`,
+the type can be gone before a `slide` or `whip` has travelled far, and the move
+reads as weaker than it is. Shorten `motion.exit` if you want the push to carry
+the content rather than an empty frame.
+
 `targetLufs` is the loudness the final mix is normalised to; −14 is what the
 platforms want.
 

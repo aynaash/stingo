@@ -51,7 +51,11 @@ function framing(cam: any, canvas: { width: number; height: number }): string {
   }
   const px = Math.round(canvas.width * cam.size);
   const shape = cam.shape === 'circle' ? ', circular crop' : '';
-  return `a ${px}px inset in the ${{ tl: 'top left', tr: 'top right', bl: 'bottom left', br: 'bottom right' }[cam.shape === 'circle' ? cam.corner : cam.corner] ?? cam.corner}${shape} — sit closer than feels natural`;
+  const corners: Record<string, string> = {
+    tl: 'top left', tr: 'top right', bl: 'bottom left', br: 'bottom right',
+  };
+  return `a ${px}px inset in the ${corners[String(cam.corner)] ?? cam.corner}${shape}`
+    + ' — sit closer than feels natural';
 }
 
 /** What a non-camera scene puts on screen, in one line. */

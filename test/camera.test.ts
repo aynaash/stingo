@@ -410,3 +410,41 @@ describe('a take shorter than its scene', () => {
     await s.close?.();
   }, 30000);
 });
+
+describe('a missing take', () => {
+  /** The CLI prints "rendering a placeholder" for an unreadable source. It then
+   *  crashed the render worker on the first frame of that scene, because the
+   *  decoder was still asked to open the file. The promise and the behaviour
+   *  have to agree. */
+  const doc = () => parseVideo({
+    title: 'no footage',
+    canvas: { preset: 'horizontal', fps: 30 },
+    scenes: [{ block: 'camera', dur: '2s', camera: { src: '/does/not/exist.mp4', layout: 'full' } }],
+  });
+
+  test('renders rather than throwing, on the full decode path', async () => {
+    const { Film, probeClips } = await import('@stingo/film');
+    const d = doc();
+    const { clips, missing } = await probeClips(d);
+    expect(missing).toHaveLength(1);
+
+    // noCamera is false: this is the path the user actually took
+    const film = await Film.create({ doc: d, taste: TasteProfile.parse({}), clips, hud: false });
+    try {
+      const px = await film.framePixels(15);
+      expect(px.byteLength).toBe(1920 * 1080 * 4);
+      // the frame must be opaque — a hole was cut for a take that never arrived
+      let transparent = 0;
+      for (let i = 3; i < px.byteLength; i += 4 * 997) if (px[i]! < 255) transparent++;
+      expect(transparent).toBe(0);
+    } finally { await film.close(); }
+  }, 60_000);
+
+  test('still renders when nothing was probed at all', async () => {
+    const { Film } = await import('@stingo/film');
+    const film = await Film.create({ doc: doc(), taste: TasteProfile.parse({}), hud: false });
+    try {
+      expect((await film.framePixels(15)).byteLength).toBe(1920 * 1080 * 4);
+    } finally { await film.close(); }
+  }, 60_000);
+});

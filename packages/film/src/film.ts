@@ -57,6 +57,8 @@ export class Film {
     private camera: CameraPass,
     private backdrop: BackdropPass,
     readonly noCamera: boolean,
+    /** sources probeClips could read; undefined means nothing was probed */
+    private readable?: Set<string>,
   ) {}
 
   static async create(opts: FilmOpts): Promise<Film> {
@@ -73,7 +75,9 @@ export class Film {
     const noCamera = opts.noCamera ?? false;
     const camera = new CameraPass(hexRgb(opts.taste.palette.bg), opts.doc.canvas.fps, !noCamera);
     const backdrop = new BackdropPass(opts.doc.canvas.fps, !noCamera);
-    return new Film(opts.doc, opts.taste, timeline, renderer, grid, warnings, opts.hud ?? true, texture, captions, camera, backdrop, noCamera);
+    return new Film(opts.doc, opts.taste, timeline, renderer, grid, warnings, opts.hud ?? true,
+      texture, captions, camera, backdrop, noCamera,
+      opts.clips ? new Set(opts.clips.keys()) : undefined);
   }
 
   get fps() { return this.doc.canvas.fps; }
@@ -224,7 +228,11 @@ export class Film {
       const srcTime = toSeconds(cam.from, this.grid) + hit.local;
       // an SVG-only consumer (the preview server) has no pixel stage to blend
       // into, so it gets a labelled placeholder where the take would sit
-      if (forPixels && !this.noCamera) {
+      // A take that could not be probed is not going to decode either. The CLI
+      // already says it will draw a placeholder for one; without this it said so
+      // and then the worker died on the first frame of that scene.
+      const decodable = !this.readable || this.readable.has(cam.src);
+      if (forPixels && !this.noCamera && decodable) {
         mask = { id: 'stingo-cam', body: cam.layout === 'pip' };
         defs += cameraMask(placement, width, height, mask.id);
         cut = { cam, placement, srcTime };

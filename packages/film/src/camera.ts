@@ -37,6 +37,8 @@ function coverageMask(p: Placement): Uint8Array | undefined {
 export class CameraPass {
   private pool: SourcePool;
   private masks = new Map<string, Uint8Array | undefined>();
+  /** sources already reported as unopenable, so the warning is printed once */
+  private broken = new Set<string>();
   /** flat colour for any pixel neither the SVG nor the take covered */
   constructor(private bg: [number, number, number], fps: number, private enabled = true) {
     this.pool = new SourcePool(fps);
@@ -55,7 +57,20 @@ export class CameraPass {
       const framing: Framing = {
         fit: cam.fit, zoom: cam.zoom, offsetX: cam.offsetX, offsetY: cam.offsetY, mirror: cam.mirror,
       };
-      const src = await this.pool.get(cam.src);
+      // Belt and braces: compose already skips a source that could not be
+      // probed, but a file can also vanish between probing and rendering, and
+      // one unreadable take must not kill a worker a thousand frames in.
+      let src;
+      try {
+        src = await this.pool.get(cam.src);
+      } catch (e) {
+        if (!this.broken.has(cam.src)) {
+          this.broken.add(cam.src);
+          console.error(`[camera] ${cam.src} could not be opened, leaving its box empty: `
+            + `${e instanceof Error ? e.message : e}`);
+        }
+        return flattenOnto(px, w * h, this.bg);
+      }
       const layer = await src.at(cut.srcTime, { w: p.w, h: p.h }, framing);
       blendUnder(px, w, h, layer, p.w, p.h, p.x, p.y, this.maskFor(p));
     }

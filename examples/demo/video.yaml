@@ -1,0 +1,79 @@
+# The demo on the landing page — about fifty seconds, horizontal.
+#
+# You record two things: one continuous voiceover of every `say:` line below,
+# in order, and three short takes of yourself talking. The takes are picture
+# only (`mute: true`) because the voiceover already carries the words — which is
+# why you can say anything you like while recording them.
+#
+#   bun run tools/shootlist.ts examples/demo/video.yaml -o examples/demo/SHOOT.md
+#   bun run tools/ingest.ts    examples/demo/video.yaml ~/Desktop/clips --apply
+#   bun stingo render          examples/demo/video.yaml -o out/demo.mp4
+
+title: stingo — the video is a text file
+canvas: { preset: horizontal, fps: 30 }
+taste: bootdev
+
+audio:
+  music: assets/music/loop128.mp3
+  bpm: auto
+  musicGainDb: -22
+  vo: examples/demo/takes/vo.m4a
+
+captions: { enabled: true, style: word, burn: true }
+
+scenes:
+  - block: camera
+    id: hook
+    say: Every video you have seen about code was made by dragging rectangles around a timeline. I got tired of that.
+    camera: { src: takes/01-hook.mp4, layout: full, scrim: 0.3, mute: true }
+    lower: { name: Hersi, role: hersietech.com }
+
+  - block: code
+    id: script
+    say: So the video became a text file. This is the whole thing — scenes, in order.
+    lang: yaml
+    caption: the script
+    code: |
+      scenes:
+        - block: title
+          text: Goroutines are not threads
+        - block: code
+          lang: go
+          file: ./worker.go
+    highlight: [1, 2]
+
+  - block: statement
+    id: turn
+    text: What it looks like is not in there.
+    say: What it looks like is not in there at all.
+    emphasis: [not]
+
+  - block: compare
+    id: two-files
+    say: One file says what you are saying. Another says what it looks like. Swap the second and the same script becomes a different film.
+    left: { title: video.yaml, items: [what you say, scenes and order, your words] }
+    right: { title: taste.json, items: [how it looks, colour and type, motion and pacing] }
+
+  - block: camera
+    id: beat
+    say: Every cut you are watching landed on a beat of the track, because the script knows the tempo.
+    camera: { src: takes/02-beat.mp4, layout: pip, corner: br, size: 0.3, shape: circle, mute: true }
+    bg: { kind: grid, opacity: 0.3 }
+
+  - block: stat
+    id: speed
+    say: Thirty-three milliseconds a frame. A five minute film renders in about a minute.
+    value: "33ms"
+    label: a frame
+    sub: 1080 by 1920, eight workers
+
+  - block: camera
+    id: close
+    say: And this video, the one you are watching, was made by the thing it is about.
+    camera: { src: takes/03-close.mp4, layout: full, scrim: 0.35, mute: true }
+
+  - block: outro
+    id: end
+    text: stingo
+    sub: the video is a text file
+    handle: github.com/aynaash/stingo

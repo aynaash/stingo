@@ -33,6 +33,12 @@ export const PAGES: Page[] = [
     section: 'Reference',
   },
   {
+    slug: 'showcase',
+    title: 'Showcase',
+    blurb: 'Every frame stingo makes, generated rather than curated.',
+    section: 'Start here',
+  },
+  {
     slug: 'taste',
     title: 'Taste profiles',
     blurb: 'Palette, type, motion, pacing and texture — and what stingo decides for you.',

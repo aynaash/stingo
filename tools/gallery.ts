@@ -13,7 +13,7 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { spawn } from 'bun';
 import '@stingo/blocks';
-import { parseVideo, blockNames } from '@stingo/schema';
+import { parseVideo, blockNames, TasteProfile } from '@stingo/schema';
 import { Film } from '@stingo/film';
 import { THEMES, derive } from '@stingo/themes';
 
@@ -183,6 +183,74 @@ if (!only || only === 'demo') {
   const mb = (await Bun.file('docs/assets/video/demo.mp4').size) / 1e6;
   console.log(`  \x1b[32m✓\x1b[0m demo.mp4`.padEnd(34) + `\x1b[2m960×540 · ${mb.toFixed(1)} MB · ${kinds}\x1b[0m`);
   console.log(`  \x1b[32m✓\x1b[0m demo-poster.webp`);
+}
+
+
+// ── every b-roll generator ─────────────────────────────────────────────────
+if (!only || only === 'broll') {
+  console.log('\n\x1b[2m  b-roll — twelve generators, one scene\x1b[0m');
+  const { GENERATORS } = await import('@stingo/blocks');
+  const kinds = Object.keys(GENERATORS).filter((k) => k !== 'none');
+  for (const kind of kinds) {
+    await shot({
+      name: `broll-${kind}`,
+      scenes: [{ block: 'statement', text: kind, bg: { kind, opacity: 0.85, seed: 3 } }],
+      taste: THEMES.bootdev, w: 720, h: 1280, outW: 360, outH: 640, at: 0.75,
+    });
+  }
+}
+
+// ── every transition, as a strip across the cut ────────────────────────────
+if (!only || only === 'transitions') {
+  console.log('\n\x1b[2m  transitions — five frames across a boundary\x1b[0m');
+  const kinds = ['fade', 'wipe', 'whip', 'slide', 'glitch'] as const;
+  const W = 320, H = 569;
+  for (const kind of kinds) {
+    const taste = TasteProfile.parse({
+      ...THEMES.bootdev,
+      pacing: { ...THEMES.bootdev.pacing, cutOn: 'free' },
+      transition: { kind, duration: 0.4 },
+    });
+    const doc = parseVideo({
+      title: kind,
+      canvas: { width: W, height: H, fps: 30 },
+      scenes: [
+        { block: 'statement', text: 'one', dur: '4s' },
+        { block: 'stat', value: '2', label: 'two', dur: '4s' },
+      ],
+    });
+    const film = await Film.create({ doc, taste, grid: GRID, hud: false, noCamera: true });
+    // Three moments, not five. The strip renders inside a prose column, and at
+    // five frames across each one is too small to read what the move is doing.
+    const frames: string[] = [];
+    for (const [i, t] of [3.8, 4.05, 4.3].entries()) {
+      const png = join(TMP, `tr-${kind}-${i}.png`);
+      await Bun.write(png, await film.framePng(Math.round(t * 30)));
+      frames.push(png);
+    }
+    await film.close?.();
+    const out = join(OUT, `transition-${kind}.webp`);
+    await ff([...frames.flatMap((f) => ['-i', f]),
+      '-filter_complex', `[0][1][2]hstack=3,scale=${W * 3}:-1:flags=lanczos`,
+      '-frames:v', '1', '-quality', '82', out]);
+    const kb = (await Bun.file(out).size) / 1024;
+    console.log(`  \x1b[32m✓\x1b[0m transition-${kind}.webp`.padEnd(38) + `\x1b[2m${kb.toFixed(0)} KB\x1b[0m`);
+  }
+}
+
+// ── one scene, three shapes ────────────────────────────────────────────────
+if (!only || only === 'orientation') {
+  console.log('\n\x1b[2m  orientation — the same scene, three canvases\x1b[0m');
+  const scene = [BLOCK_SHOTS.compare!.scene];
+  // One published height for all three. The gallery grid assumes cards of a
+  // single aspect; three different ones knock the captions out of line.
+  for (const [name, w, h, ow, oh] of [
+    ['orientation-vertical', 1080, 1920, 203, 360],
+    ['orientation-horizontal', 1920, 1080, 640, 360],
+    ['orientation-square', 1080, 1080, 360, 360],
+  ] as const) {
+    await shot({ name, scenes: scene, taste: THEMES.bootdev, w, h, outW: ow, outH: oh, at: 0.95 });
+  }
 }
 
 console.log('\n\x1b[2m  docs/assets — commit these alongside the change that altered them\x1b[0m\n');

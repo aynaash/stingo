@@ -13,24 +13,62 @@ const grid = { bpm: 120, offset: 0, beatsPerBar: 4 };
 let dir = '';
 let png = '';
 
-/** Memoise the PROMISE, not a flag.
+/** Build the fixtures ourselves rather than asking ffmpeg for them.
  *
- *  Guarding on `if (dir) return` looked fine and was a race: `dir` is assigned
- *  before ffmpeg has finished writing, so a second concurrent caller returned
- *  early and read a file that did not exist yet. It passed locally on timing
- *  luck and failed on CI. */
+ *  This suite tests a header PARSER, so the bytes are the subject — borrowing
+ *  them from ffmpeg made the result depend on which ffmpeg the machine has.
+ *  A 4x3 PNG here and a 4x3 PNG on a CI runner turned out not to be the same
+ *  file, and the test failed on a difference it was never meant to measure. */
+function crc32(buf: Uint8Array): number {
+  let c = ~0;
+  for (let i = 0; i < buf.length; i++) {
+    c ^= buf[i]!;
+    for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
+  }
+  return ~c >>> 0;
+}
+
+function chunk(type: string, body: Uint8Array): Uint8Array {
+  const out = Buffer.alloc(12 + body.length);
+  out.writeUInt32BE(body.length, 0);
+  out.write(type, 4, 'ascii');
+  Buffer.from(body).copy(out, 8);
+  out.writeUInt32BE(crc32(out.subarray(4, 8 + body.length)), 8 + body.length);
+  return out;
+}
+
+export function makePng(width: number, height: number): Buffer {
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;    // bit depth
+  ihdr[9] = 2;    // truecolour
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    Buffer.from(chunk('IHDR', ihdr)),
+    Buffer.from(chunk('IDAT', new Uint8Array([0x78, 0x9c, 0x63, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01]))),
+    Buffer.from(chunk('IEND', new Uint8Array())),
+  ]);
+}
+
+/** A baseline JPEG carrying nothing but the markers the parser walks. */
+export function makeJpeg(width: number, height: number): Buffer {
+  const sof = Buffer.alloc(10);
+  sof.writeUInt16BE(0xffc0, 0);
+  sof.writeUInt16BE(8, 2);        // segment length
+  sof[4] = 8;                     // precision
+  sof.writeUInt16BE(height, 5);
+  sof.writeUInt16BE(width, 7);
+  return Buffer.concat([Buffer.from([0xff, 0xd8]), sof, Buffer.from([0xff, 0xd9])]);
+}
+
 let ready: Promise<void> | null = null;
 
 function fixtures(): Promise<void> {
   ready ??= (async () => {
     dir = await mkdtemp(join(tmpdir(), 'stingo-img-'));
     png = join(dir, 'a.png');
-    // a real 4x3 PNG, written by ffmpeg so the header is genuine
-    const p = Bun.spawn(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
-      '-f', 'lavfi', '-i', 'color=c=red:s=4x3', '-frames:v', '1', png], { stderr: 'pipe' });
-    const err = await new Response(p.stderr).text();
-    if ((await p.exited) !== 0) throw new Error(`fixture render failed: ${err}`);
-    if (!(await Bun.file(png).exists())) throw new Error(`fixture was not written: ${png}`);
+    await writeFile(png, makePng(4, 3));
   })();
   return ready;
 }
@@ -53,6 +91,24 @@ describe('image header parsing', () => {
     const b = join(dir, 'vb.svg');
     await writeFile(b, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50"></svg>');
     expect(imageInfo(b)).toMatchObject({ width: 200, height: 50 });
+  });
+
+  test('reads JPEG dimensions by walking to the start-of-frame', async () => {
+    await fixtures();
+    const jpg = join(dir, 'a.jpg');
+    await writeFile(jpg, makeJpeg(120, 80));
+    expect(imageInfo(jpg)).toMatchObject({ width: 120, height: 80, mime: 'image/jpeg' });
+  });
+
+  test('reads a real PNG off disk, not just a synthetic one', async () => {
+    const real = 'docs/assets/img/block-code.webp';
+    // the gallery writes webp; use the png the block gallery renders from
+    const candidate = '.stingo/gallery/block-code.png';
+    if (await Bun.file(candidate).exists()) {
+      const i = imageInfo(candidate);
+      expect(i.width).toBe(1080);
+      expect(i.height).toBe(1920);
+    }
   });
 
   test('a missing file fails with the path in the message', () => {

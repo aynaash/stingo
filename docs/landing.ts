@@ -278,12 +278,10 @@ ${topbar(base)}
 
 <section class="section wrap">
   <h2>Start</h2>
-  <figure class="code" data-lang="bash">${hl(`git clone ${GITHUB.replace('https://', '')}
-cd stingo && bun install
+  <figure class="code" data-lang="bash">${hl(`bun add @hersidev/stingo
 
-# your agent picks up .mcp.json from the repository — then just ask it.
-# or do it yourself:
-bun stingo render examples/goroutines/video.yaml`, 'bash')}</figure>
+# then point an agent at it, or do it yourself:
+bunx stingo render film.yaml`, 'bash')}</figure>
   <p>Needs Bun 1.3 or newer and ffmpeg on your <code>PATH</code>.
   <a href="${u('mcp')}">Connect an agent</a> ·
   <a href="${u('start')}">write one by hand</a> ·

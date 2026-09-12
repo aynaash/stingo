@@ -48,6 +48,7 @@ ${C.b}COMMANDS${C.x}
   ${C.t}doctor${C.x} <taste>       audit a taste profile against the house floors
   ${C.t}preview${C.x} <doc>       serve a live scrubbing preview
   ${C.t}takes${C.x}  <doc>        inspect the camera takes a script references
+  ${C.t}version${C.x}             print the version and exit
 
 ${C.b}OPTIONS${C.x}
   -o, --out <file>      output path

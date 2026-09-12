@@ -90,12 +90,18 @@ captions:
 |---|---|---|---|
 | `enabled` | boolean | `false` | off unless you ask for it |
 | `burn` | boolean | `true` | draw them into the frame |
-| `style` | `word` · `line` | `word` | accepted by the schema, not read yet |
+| `style` | `word` · `line` | `word` | see below |
 
 Captions come from the `say` field on each scene — there is no second script to
 keep in sync. Words are spread across the scene at the taste's
 `wordsPerMinute`, grouped into short chunks, and drawn above the platform safe
 area with the word being spoken picked out.
+
+`style: word` shows a few words at a time and picks out the one being spoken —
+the short-form look, and what you want when the timing comes from text you wrote.
+`style: line` is a plain subtitle: a whole readable line at once, no highlight.
+Use it over a recorded take, where the timing is estimated and a highlight
+landing on the wrong word is worse than no highlight at all.
 
 This is **estimated timing, not forced alignment**. It tracks text-to-speech
 generated from the same words; against a recorded take it will drift.
@@ -122,7 +128,25 @@ these in addition to its own fields:
 | `enter` / `exit` | animation | override the taste's motion for this scene |
 | `camera` | camera | a recorded take — see [talking head](camera) |
 | `cut` | `free` · `beat` · `bar` | override the taste's snapping for this scene |
+| `plain` | boolean | drop the art direction for this scene — see below |
 | `note` | string | a comment that travels with the scene |
+
+### Plain scenes
+
+```yaml
+- block: statement
+  plain: true
+  text: A video is a text file
+```
+
+`plain: true` removes the art direction from one scene: no anchored
+composition, no rule bleeding off the edge, no corner marks, no scene numeral.
+The block gets the whole frame and nothing else is drawn.
+
+That furniture exists to orient someone travelling through a film. In a frame
+that is not part of one — a thumbnail, a title card, a still you are exporting
+for a blog post — it is clutter, and a scene numeral is actively wrong. See
+[the thumbnails example](https://github.com/aynaash/stingo/tree/main/examples/building-stingo/thumbnails).
 
 ### Time values
 

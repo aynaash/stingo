@@ -135,6 +135,42 @@ Audits a profile against the house contrast floors — body 7:1, muted 4.5:1,
 accents 4.5:1 — and says which failures stingo repairs automatically at render
 time.
 
+## version
+
+```bash
+stingo version
+stingo --version
+```
+
+Prints the version and nothing else. An unknown command prints the help screen
+and exits **1**, so a typo in a script fails rather than passing quietly.
+
+## Scripts in the repo
+
+Not `stingo` subcommands — these live in `tools/` and run from a checkout,
+because they are about producing a film rather than rendering one.
+
+```bash
+bun run tools/shootlist.ts <doc> -o SHOOT.md    # the sheet you shoot from
+bun run tools/ingest.ts <doc> <folder>          # phone clips → takes/
+bun run tools/gallery.ts                        # every image in these docs
+bun run tools/blockdocs.ts                      # the block reference
+```
+
+`shootlist` derives the shot list from the script: every camera scene in order,
+what to say, how long, how close to sit, and what it cuts into. A list kept by
+hand drifts within a day and then you record the wrong thing.
+
+`ingest` maps a folder of clips onto the takes a script names, in recording
+order. It prints the plan first — which clip becomes which take, whether any is
+shorter than its scene needs — and writes nothing without `--apply`. Applying
+bakes in the rotation a phone leaves in metadata, crops to the project's frame
+size, and re-encodes to H.264 with 48 kHz audio.
+
+`gallery` and `blockdocs` regenerate what is on this site. Both have a
+`--check` mode that CI runs, so a screenshot or a field table cannot drift
+away from the code.
+
 ## Flags
 
 | Flag | |

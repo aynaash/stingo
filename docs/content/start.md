@@ -15,18 +15,56 @@ ffmpeg -version | head -1
 Bun is a hard requirement rather than a preference: the pipeline drives ffmpeg
 through `Bun.spawn` and reads files through `Bun.file`.
 
-## Render the example
+## Install it
+
+```bash
+bun add @hersidev/stingo
+```
+
+That gives you the library and two commands, `stingo` and `stingo-mcp`.
+
+The package is scoped because npm refused the bare name — *stingo* is two
+letters from *string*, so it read as typosquatting. The commands are unaffected.
+
+## Your first film
+
+```yaml
+# film.yaml
+title: It works
+canvas: { preset: vertical, fps: 30 }
+taste: bootdev
+
+scenes:
+  - block: title
+    kicker: first render
+    text: It works
+    sub: That is the whole file.
+
+  - block: stat
+    value: 33ms
+    label: per frame
+```
+
+```bash
+bunx stingo render film.yaml
+```
+
+Fonts ship with the package, so there is nothing else to install.
+
+## Or run the example from a clone
+
+The repository carries a five-minute example film and everything used to make
+the launch video, which is more interesting than a two-scene script:
 
 ```bash
 git clone https://github.com/aynaash/stingo
-cd stingo
-bun install
+cd stingo && bun install
 
 bun stingo render examples/goroutines/video.yaml
 ```
 
 That writes `out/video.mp4` — about five minutes of vertical video, cut to a
-128 BPM track. The first render is the slow one: fonts load, the syntax
+128.9 BPM track. The first render is the slow one: fonts load, the syntax
 highlighter warms up, and every frame is drawn from scratch.
 
 Add `--draft` while you are iterating. It drops the encoder to `ultrafast` and
@@ -141,3 +179,19 @@ can leave `dur` off until a scene actually feels wrong.
 - [Blocks](blocks) — the fourteen scene types
 - [Taste profiles](taste) — palette, motion, pacing, texture
 - [Talking head](camera) — putting yourself in the frame
+
+## The examples
+
+Four in the repo, each answering a different question.
+
+| | |
+|---|---|
+| `examples/quickstart` | the smallest thing that renders — a film written in TypeScript |
+| `examples/goroutines` | a full explainer: 50-odd scenes, code, charts, a diagram, cut to a track |
+| `examples/demo` | the fifty-second demo on the front of this site, narrated |
+| `examples/building-stingo` | a talking-head film, with a shot list and a recording guide |
+
+`quickstart` and `goroutines` render with nothing but the repo. `demo` and
+`building-stingo` need takes you record — each has a README saying exactly what
+to shoot, and `tools/ingest.ts` turns a folder of phone clips into the files
+their scripts name.

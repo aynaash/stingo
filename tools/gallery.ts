@@ -115,9 +115,16 @@ if (!only || only === 'camera') {
 // ── the same scene under three tastes ──────────────────────────────────────
 if (!only || only === 'tastes') {
   console.log('\n\x1b[2m  tastes — the same scene, three profiles\x1b[0m');
-  const scene = [{ block: 'code', lang: 'go', code: GO, highlight: [4, 5],
-    caption: 'go starts it; the channel says when it finished.' }];
-  const { taste: derived } = derive({ id: 'hersie', name: 'Derived', brand: '#ff7a18', mode: 'dark', mood: 'bouncy', texture: 'film' });
+  // A code window is the worst possible scene for this comparison: it is mostly
+  // syntax colours, which barely move between tastes, inside a panel that hides
+  // the ground. A title shows what actually changes — display face, the accent
+  // on the kicker, text and muted against the lit background.
+  const scene = [{ block: 'title', kicker: 'concurrency',
+    text: 'Goroutines are not threads',
+    sub: 'And that difference is the whole point.' }];
+  // a cool hue, because the two warm profiles below are close enough on their
+  // own grounds that a third warm one would demonstrate nothing
+  const { taste: derived } = derive({ id: 'derived', name: 'Derived', brand: '#22d3ee', mode: 'dark', mood: 'bouncy', texture: 'film' });
   for (const [name, taste] of [['taste-bootdev', THEMES.bootdev], ['taste-dusk', THEMES.dusk], ['taste-hersie', derived]] as const) {
     await shot({ name, scenes: scene, taste, w: 1920, h: 1080, outW: 860, outH: 484, at: 0.95 });
   }

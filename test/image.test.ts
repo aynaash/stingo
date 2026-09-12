@@ -4,7 +4,7 @@ import { parseVideo, hasBlock, blockDuration } from '@stingo/schema';
 import { imageInfo, fitBox } from '@stingo/blocks';
 import { Film } from '@stingo/film';
 import { THEMES } from '@stingo/themes';
-import { image, film } from 'stingo';
+import { image, film } from '@hersidev/stingo';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -13,14 +13,26 @@ const grid = { bpm: 120, offset: 0, beatsPerBar: 4 };
 let dir = '';
 let png = '';
 
-async function fixtures() {
-  if (dir) return;
-  dir = await mkdtemp(join(tmpdir(), 'stingo-img-'));
-  png = join(dir, 'a.png');
-  // a real 4x3 PNG, written by ffmpeg so the header is genuine
-  const p = Bun.spawn(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
-    '-f', 'lavfi', '-i', 'color=c=red:s=4x3', '-frames:v', '1', png], { stderr: 'pipe' });
-  await p.exited;
+/** Memoise the PROMISE, not a flag.
+ *
+ *  Guarding on `if (dir) return` looked fine and was a race: `dir` is assigned
+ *  before ffmpeg has finished writing, so a second concurrent caller returned
+ *  early and read a file that did not exist yet. It passed locally on timing
+ *  luck and failed on CI. */
+let ready: Promise<void> | null = null;
+
+function fixtures(): Promise<void> {
+  ready ??= (async () => {
+    dir = await mkdtemp(join(tmpdir(), 'stingo-img-'));
+    png = join(dir, 'a.png');
+    // a real 4x3 PNG, written by ffmpeg so the header is genuine
+    const p = Bun.spawn(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
+      '-f', 'lavfi', '-i', 'color=c=red:s=4x3', '-frames:v', '1', png], { stderr: 'pipe' });
+    const err = await new Response(p.stderr).text();
+    if ((await p.exited) !== 0) throw new Error(`fixture render failed: ${err}`);
+    if (!(await Bun.file(png).exists())) throw new Error(`fixture was not written: ${png}`);
+  })();
+  return ready;
 }
 
 describe('image header parsing', () => {

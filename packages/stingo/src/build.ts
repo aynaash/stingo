@@ -31,9 +31,19 @@ class SceneBuilder<Self extends SceneBuilder<any>> {
   say(v: string) { this.s.say = v; return this.self(); }
   note(v: string) { this.s.note = v; return this.self(); }
 
-  /** Animated background layer. `bg('grid')` or `bg('particles', { opacity: .8 })`. */
-  bg(kind: BrollKind, opts: Partial<Omit<Broll, 'kind'>> = {}) {
+  /** Procedural background. `bg('grid')` or `bg('particles', { opacity: .8 })`. */
+  bg(kind: BrollKind, opts: Partial<Omit<Broll, 'kind' | 'src'>> = {}) {
     this.s.bg = { kind, ...opts };
+    return this.self();
+  }
+
+  /** Your own footage or image behind the scene.
+   *
+   *  `scrim` defaults high because stingo cannot see what is in your media and
+   *  therefore cannot promise the type on top of it stays readable. Turn it
+   *  down when you have checked a still. */
+  backdrop(src: string, opts: Partial<Omit<Broll, 'kind' | 'src'>> = {}) {
+    this.s.bg = { src, ...opts };
     return this.self();
   }
   /** Composite a recorded take into this scene.

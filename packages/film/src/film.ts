@@ -7,8 +7,10 @@ import { Broll, blockBroll, type VideoDoc, type TasteProfile, type Scene } from 
 import { plan, type ClipTable } from './plan';
 import { captionCues, captionAt, type CaptionCue } from './captions';
 import { transitionFrame, type TransitionKind } from './transition';
+import { BackdropPass, backdropFraming, backdropTime } from './backdrop';
 import { rgbaToPng } from './png';
 import { CameraPass, hexRgb, type CameraCut } from './camera';
+import { flattenOnto } from '@stingo/media';
 
 interface Composition {
   el: El;
@@ -19,6 +21,9 @@ interface Composition {
   cut: CameraCut | null;
   /** a transition effect SVG cannot express, applied after rasterising */
   pixel?: (px: Buffer, w: number, h: number) => void;
+  /** the scene's own media playing behind it, resolved after rasterising
+   *  because measuring a clip's length is async and composing is not */
+  backdrop?: { cfg: Broll; local: number } | null;
 }
 
 export interface FilmOpts {
@@ -50,6 +55,7 @@ export class Film {
     private texture: TexturePass,
     readonly captions: CaptionCue[] | null,
     private camera: CameraPass,
+    private backdrop: BackdropPass,
     readonly noCamera: boolean,
   ) {}
 
@@ -66,7 +72,8 @@ export class Film {
     const captions = wantCaptions ? captionCues(opts.doc, timeline, opts.taste) : null;
     const noCamera = opts.noCamera ?? false;
     const camera = new CameraPass(hexRgb(opts.taste.palette.bg), opts.doc.canvas.fps, !noCamera);
-    return new Film(opts.doc, opts.taste, timeline, renderer, grid, warnings, opts.hud ?? true, texture, captions, camera, noCamera);
+    const backdrop = new BackdropPass(opts.doc.canvas.fps, !noCamera);
+    return new Film(opts.doc, opts.taste, timeline, renderer, grid, warnings, opts.hud ?? true, texture, captions, camera, backdrop, noCamera);
   }
 
   get fps() { return this.doc.canvas.fps; }
@@ -191,10 +198,21 @@ export class Film {
     // the grid b-roll already draws a grid; drawing the chrome one too doubles
     // the line count for no visual gain
     // ground first, then b-roll, then the furniture that frames them
-    let behind = `<rect width="${width}" height="${height}" fill="${this.taste.palette.bg}"/>`
-      + groundLayer(full)
-      + (cfg.kind === 'grid' ? '' : gridLayer(ctx)) + bg
-      + furnitureLayer(full, rect);
+    // With the user's own media behind the scene the SVG must NOT paint a
+    // ground, or the backdrop is blended under an opaque rectangle and never
+    // seen. The scrim goes down instead: above the media, below the furniture
+    // and the type, which is the only thing keeping text readable over footage
+    // stingo has no say over.
+    const media = cfg.src ? cfg : null;
+    let behind = media
+      ? (media.scrim > 0
+          ? `<rect width="${width}" height="${height}" fill="${this.taste.palette.bg}" opacity="${media.scrim.toFixed(3)}"/>`
+          : '')
+        + furnitureLayer(full, rect)
+      : `<rect width="${width}" height="${height}" fill="${this.taste.palette.bg}"/>`
+        + groundLayer(full)
+        + (cfg.kind === 'grid' ? '' : gridLayer(ctx)) + bg
+        + furnitureLayer(full, rect);
     let defs = brollDefs(this.taste.palette, width, height) + tex.defs
       + groundDefs(full, hit.cue.index);
     let infront = tex.infront + (move.overlay ?? '');
@@ -216,7 +234,8 @@ export class Film {
       infront += cameraChrome(placement, cam, ctx);
     }
 
-    return { el, defs, behind, infront, mask, cut, pixel: move.pixel };
+    return { el, defs, behind, infront, mask, cut, pixel: move.pixel,
+             backdrop: media ? { cfg: media, local: hit.local } : null };
   }
 
   /** SVG for one frame. Camera takes appear as placeholders: an SVG document
@@ -230,10 +249,22 @@ export class Film {
   /** Raw RGBA pixels for one frame — the encoder's input. */
   async framePixels(frame: number): Promise<Buffer> {
     const t = frame / this.fps;
-    const { el, defs, behind, infront, mask, cut, pixel } = this.compose(t, true);
+    const { el, defs, behind, infront, mask, cut, pixel, backdrop } = this.compose(t, true);
     const svg = composite(await this.renderer.toSvg(el), { defs, behind, infront, mask });
     const { width, height } = this.doc.canvas;
-    const px = await this.camera.apply(this.renderer.svgToPixels(svg), width, height, cut);
+    // blendUnder puts each layer beneath what is already there, so these run
+    // top-down: the take goes under the type, the backdrop under the take.
+    const px = await this.camera.apply(this.renderer.svgToPixels(svg), width, height, cut, !backdrop);
+    if (backdrop) {
+      const len = await this.backdrop.lengthOf(backdrop.cfg.src!);
+      await this.backdrop.apply(px, width, height, {
+        src: backdrop.cfg.src!,
+        framing: backdropFraming(backdrop.cfg),
+        srcTime: backdropTime(backdrop.cfg, backdrop.local, this.grid, len),
+      });
+      // nothing else will cover the holes now
+      flattenOnto(px, width * height, hexRgb(this.taste.palette.bg));
+    }
     // the glitch transition tears the finished frame, so it runs after the take
     // is composited but before the film grain settles over everything
     pixel?.(px, width, height);
@@ -241,7 +272,7 @@ export class Film {
   }
 
   /** Release decoder processes. Safe to call more than once. */
-  async close(): Promise<void> { await this.camera.close(); }
+  async close(): Promise<void> { await this.camera.close(); await this.backdrop.close(); }
 
   /** PNG for previews/stills. Goes through the pixel path so textures apply. */
   async framePng(frame: number): Promise<Buffer> {

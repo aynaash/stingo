@@ -6,3 +6,4 @@ export * from './clips';
 export * from './camera';
 export * from './captions';
 export * from './transition';
+export * from './backdrop';

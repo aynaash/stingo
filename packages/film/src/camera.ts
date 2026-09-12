@@ -49,7 +49,7 @@ export class CameraPass {
   }
 
   /** Blend the take into `px` (mutated in place) and leave the frame opaque. */
-  async apply(px: Buffer, w: number, h: number, cut: CameraCut | null): Promise<Buffer> {
+  async apply(px: Buffer, w: number, h: number, cut: CameraCut | null, flatten = true): Promise<Buffer> {
     if (cut && this.enabled) {
       const { cam, placement: p } = cut;
       const framing: Framing = {
@@ -59,9 +59,11 @@ export class CameraPass {
       const layer = await src.at(cut.srcTime, { w: p.w, h: p.h }, framing);
       blendUnder(px, w, h, layer, p.w, p.h, p.x, p.y, this.maskFor(p));
     }
-    // the mask leaves holes wherever nothing covered them; the encoder wants
-    // opaque frames, so anything still transparent takes the background colour
-    if (cut) flattenOnto(px, w * h, this.bg);
+    // The mask leaves holes wherever nothing covered them; the encoder wants
+    // opaque frames, so anything still transparent takes the background colour.
+    // Deferred when a backdrop is still to be blended underneath — flattening
+    // first would fill the very holes the backdrop is meant to show through.
+    if (cut && flatten) flattenOnto(px, w * h, this.bg);
     return px;
   }
 

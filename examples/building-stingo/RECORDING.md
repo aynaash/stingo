@@ -13,7 +13,20 @@ The rough render is worth watching before you shoot anything. Each camera scene
 draws a placeholder with the timecode it would be reading, so you can see the
 shape of the thing and hear where the music lands.
 
-## What to shoot — the long video
+## What to shoot
+
+**[SHOOT.md](./SHOOT.md) is the sheet to work from.** It is generated from the
+script, so it cannot drift: every take in order, what to say, how long, how
+close to sit, and what it cuts into either side.
+
+```bash
+bun run tools/shootlist.ts examples/building-stingo/video.yaml -o SHOOT.md
+bun run tools/shootlist.ts examples/building-stingo/reel.yaml  -o SHOOT-REEL.md
+```
+
+Re-run it whenever the script changes.
+
+## The long video at a glance
 
 Fourteen takes, one file each, named to match `src:` in `video.yaml`.
 

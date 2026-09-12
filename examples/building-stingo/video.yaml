@@ -60,16 +60,18 @@ scenes:
 
   - block: list
     title: What one change costs
+    bg: { kind: codeRain, opacity: 0.2 }
     marker: num
     items:
       - Find the clip on the timeline
       - Drag the edge, nudge the keyframe
       - Watch it back to check
       - Repeat, for every single change
-    camera: { src: takes/02-problem.mp4, from: 5, layout: pip, corner: br, size: 0.26 }
+    camera: { src: takes/02-problem.mp4, from: 16, layout: pip, corner: br, size: 0.26 }
 
   - block: statement
     text: None of that is the idea. It is bookkeeping.
+    bg: { kind: noise, opacity: 0.55, speed: 0.7 }
     emphasis: [bookkeeping.]
 
   - block: camera
@@ -90,6 +92,7 @@ scenes:
   - block: title
     kicker: the idea
     text: A video is two files
+    bg: { kind: orbits, opacity: 0.6 }
     sub: What you say, and how it looks. Never the same file.
 
   - block: compare
@@ -122,7 +125,7 @@ scenes:
 
   - block: camera
     dur: 14s
-    camera: { src: takes/05-taste.mp4, from: 6, layout: full, scrim: 0.2 }
+    camera: { src: takes/05-taste.mp4, from: 10, layout: full, scrim: 0.2 }
     say: >
       You give it one brand colour. It puts every neutral on a measured
       lightness ramp, bleeds a trace of your hue through them, and then lifts
@@ -133,6 +136,7 @@ scenes:
   - block: title
     kicker: chapter two
     text: No browser anywhere
+    bg: { kind: grid, opacity: 0.4 }
     sub: Which is the reason it is fast.
 
   - block: diagram
@@ -167,6 +171,7 @@ scenes:
   - block: title
     kicker: the one constraint
     text: A frame is a pure function
+    bg: { kind: dots, opacity: 0.45 }
     sub: Nothing carries over from the frame before it.
 
   - block: code
@@ -179,7 +184,7 @@ scenes:
 
   - block: camera
     dur: 15s
-    camera: { src: takes/07-pure.mp4, from: 6, layout: full, scrim: 0.2 }
+    camera: { src: takes/07-pure.mp4, from: 9, layout: full, scrim: 0.2 }
     say: >
       That one rule buys everything else. Scrubbing is instant, because any
       frame is one call. Rendering goes parallel, because no worker needs to
@@ -188,6 +193,7 @@ scenes:
 
   - block: list
     title: What that one rule buys
+    bg: { kind: dots, opacity: 0.3 }
     marker: check
     items:
       - Instant scrubbing, with nothing pre-rendered
@@ -199,6 +205,7 @@ scenes:
   - block: title
     kicker: chapter three
     text: Cuts land on the music
+    bg: { kind: waves, opacity: 0.6, speed: 1.2 }
     sub: Not by hand. By construction.
 
   - block: terminal
@@ -221,12 +228,14 @@ scenes:
   - block: stat
     value: "100%"
     label: of cuts on a downbeat
+    bg: { kind: pulse, opacity: 0.55 }
     sub: Every scene after the first is an exact 8, 12, 16 or 20 beats.
 
   # ── performance ──────────────────────────────────────────────────────
   - block: title
     kicker: chapter four
     text: 585ms to 33ms
+    bg: { kind: terrain, opacity: 0.5 }
     sub: Three changes did almost all of it.
 
   - block: chart
@@ -261,12 +270,14 @@ scenes:
 
   - block: statement
     text: Every fix was deleting work, not adding cleverness.
+    bg: { kind: terrain, opacity: 0.45 }
     emphasis: [deleting]
 
   # ── the talking head, i.e. this shot ─────────────────────────────────
   - block: title
     kicker: chapter five
     text: Then I needed my own face
+    bg: { kind: beams, opacity: 0.6 }
     sub: A tool for explainers that could not show the explainer.
 
   - block: camera
@@ -289,16 +300,34 @@ scenes:
           layout: pip        # full | pip | split
           corner: br
           shape: circle
-    camera: { src: takes/10-camera.mp4, from: 9, layout: pip, corner: br, size: 0.28, shape: circle }
+    camera: { src: takes/10-camera.mp4, from: 16, layout: pip, corner: br, size: 0.28, shape: circle }
 
   - block: camera
     dur: 14s
-    camera: { src: takes/10-camera.mp4, from: 16, layout: full, scrim: 0.2 }
+    camera: { src: takes/10-camera.mp4, from: 24, layout: full, scrim: 0.2 }
     say: >
       The take is never drawn into the SVG. It is pixels. So the renderer cuts a
       hole where my face goes and blends the decoded frame in underneath. Which
       layers get the hole is what decides whether I am over the code or behind
       the caption.
+
+  - block: diagram
+    title: how a face gets into an SVG
+    nodes:
+      - { id: bg,   label: background, at: [0, 0] }
+      - { id: cont, label: your content, at: [1, 0] }
+      - { id: mask, label: cut a hole, at: [0, 1], span: 2, kind: actor, accent: true }
+      - { id: ras,  label: rasterise, at: [0, 2], span: 2 }
+      - { id: take, label: decoded take, at: [0, 3], kind: store }
+      - { id: blend, label: blend underneath, at: [1, 3], accent: true }
+      - { id: out,  label: one frame, at: [0, 4], span: 2, kind: queue }
+    edges:
+      - { from: bg, to: mask }
+      - { from: cont, to: mask }
+      - { from: mask, to: ras }
+      - { from: ras, to: blend, label: transparent hole }
+      - { from: take, to: blend }
+      - { from: blend, to: out }
 
   - block: compare
     left:  { title: procedural, items: ["Generated from the script", "Deterministic", "Costs milliseconds"] }
@@ -308,6 +337,7 @@ scenes:
   - block: title
     kicker: chapter six
     text: Then I let a model drive it
+    bg: { kind: particles, opacity: 0.55 }
     sub: And gave it eyes.
 
   - block: camera
@@ -327,16 +357,18 @@ scenes:
       - { out: "  stingo_validate  ok  53 scenes, 1080x1920" }
       - { out: "  stingo_plan      4:56, every cut on a downbeat" }
       - { out: "  stingo_still     at 23.0s -> the frame, as an image" }
-    camera: { src: takes/11-mcp.mp4, from: 8, layout: pip, corner: tr, size: 0.26 }
+    camera: { src: takes/11-mcp.mp4, from: 17, layout: pip, corner: tr, size: 0.26 }
 
   - block: statement
     text: A schema cannot tell you a headline wrapped badly.
+    bg: { kind: particles, opacity: 0.5, speed: 1.3 }
     emphasis: [wrapped, badly.]
 
   # ── who wrote it ─────────────────────────────────────────────────────
   - block: title
     kicker: the part people ask about
     text: I did not write any of this
+    bg: { kind: mesh, opacity: 0.5 }
     sub: Not one line of it.
 
   - block: camera
@@ -351,6 +383,7 @@ scenes:
 
   - block: list
     title: What that does and does not mean
+    bg: { kind: mesh, opacity: 0.3 }
     marker: arrow
     items:
       - The measurements are real, and one was reverted when re-measuring disagreed
@@ -361,6 +394,7 @@ scenes:
   - block: title
     kicker: chapter seven
     text: Three things broke on launch night
+    bg: { kind: noise, opacity: 0.6 }
     sub: All of them quietly.
 
   - block: camera
@@ -376,6 +410,7 @@ scenes:
   - block: stat
     value: "0"
     label: of those threw an error
+    bg: { kind: noise, opacity: 0.5 }
     sub: The expensive bugs are the ones that stay quiet.
 
   - block: camera

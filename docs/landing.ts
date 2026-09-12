@@ -22,20 +22,23 @@ claude  ⏺ stingo_docs      script, blocks
         ⏺ stingo_plan      4:56 · every cut on a downbeat
         ⏺ stingo_still     at 23.0s  →  the frame, returned as an image`;
 
-  // the scene beside the frame is the scene that produced it
-  const scene = `- block: compare
-  left:
-    title: OS thread
-    items:
-      - 1 MB stack, reserved up front
-      - Kernel schedules it
-      - Context switch costs microseconds
-  right:
-    title: goroutine
-    items:
-      - 2 KB stack, grows on demand
-      - Go runtime schedules it
-      - Switch costs nanoseconds`;
+  // The scene beside the frame is the scene that produced it. tools/gallery.ts
+  // renders hero-code.webp from exactly this block, so the two cannot drift
+  // without someone noticing.
+  const scene = `- block: code
+  lang: go
+  caption: go starts it; the channel says when it finished.
+  highlight: [4, 5]
+  code: |
+    func main() {
+        ch := make(chan string)
+
+        go func() {
+            ch <- "done"
+        }()
+
+        fmt.Println(<-ch)
+    }`;
 
   const mcpConfig = `{
   "mcpServers": {
@@ -76,9 +79,9 @@ ${topbar(base)}
       <figure class="code" data-lang="session">${hl(transcript, 'text')}</figure>
     </div>
     <div class="pane">
-      <div class="pane-head"><i></i><i></i><i class="on"></i> what came back · frame 690</div>
+      <div class="pane-head"><i></i><i></i><i class="on"></i> what came back</div>
       <img src="${u('assets/img/hero-code.webp')}" width="1400" height="788"
-           alt="A rendered frame: two panels comparing OS threads and goroutines, on a warm dark grid.">
+           alt="A rendered frame: highlighted Go source in a window, on a lit dark ground.">
     </div>
   </div>
 </section>
@@ -125,7 +128,7 @@ ${topbar(base)}
       <figure class="code" data-lang="yaml">${hl(scene, 'yaml')}</figure>
     </div>
     <div class="pane">
-      <div class="pane-head"><i></i><i></i><i class="on"></i> frame 690 · 23.00s</div>
+      <div class="pane-head"><i></i><i></i><i class="on"></i> the frame those lines produce</div>
       <img src="${u('assets/img/hero-code.webp')}" width="1400" height="788" loading="lazy" decoding="async"
            alt="The frame those lines of YAML produce.">
     </div>

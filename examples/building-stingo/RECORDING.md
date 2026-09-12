@@ -30,27 +30,27 @@ Re-run it whenever the script changes.
 
 Fourteen takes, one file each, named to match `src:` in `video.yaml`.
 
-| Take | Roughly | Length |
-|---|---|---|
-| `01-hook.mp4` | the hook, straight down the lens | ~15 s |
-| `02-problem.mp4` | why timeline editing is bookkeeping | ~25 s |
-| `03-wish.mp4` | "I wanted a diff" | ~12 s |
-| `04-two-files.mp4` | script vs taste, and what the name means | ~28 s |
-| `05-taste.mp4` | one colour in, a whole palette out | ~22 s |
-| `06-pipeline.mp4` | no browser: satori, resvg, ffmpeg | ~18 s |
-| `07-pure.mp4` | a frame is a pure function | ~24 s |
-| `08-beats.mp4` | it finds the beat itself | ~16 s |
-| `09-perf.mp4` | 585 ms to 33 ms, and the font flag | ~28 s |
-| `10-camera.mp4` | the camera block — this shot, explaining itself | ~32 s |
-| `11-mcp.mp4` | letting a model drive it, and giving it eyes | ~26 s |
-| `12-claude.mp4` | who actually wrote this | ~20 s |
-| `13-bugs.mp4` | three silent bugs, and npm refusing the name | ~34 s |
-| `14-outro.mp4` | it is out, go make something | ~15 s |
+| Take | Roughly |
+|---|---|
+| `01-hook.mp4` | the hook, straight down the lens |
+| `02-problem.mp4` | why timeline editing is bookkeeping |
+| `03-wish.mp4` | "I wanted a diff" |
+| `04-two-files.mp4` | script vs taste, and what the name means |
+| `05-taste.mp4` | one colour in, a whole palette out |
+| `06-pipeline.mp4` | no browser: satori, resvg, ffmpeg |
+| `07-pure.mp4` | a frame is a pure function |
+| `08-beats.mp4` | it finds the beat itself |
+| `09-perf.mp4` | 585 ms to 33 ms, and the font flag |
+| `10-camera.mp4` | the camera block — this shot, explaining itself |
+| `11-mcp.mp4` | letting a model drive it, and giving it eyes |
+| `12-claude.mp4` | who actually wrote this |
+| `13-bugs.mp4` | three silent bugs, and npm refusing the name |
+| `14-outro.mp4` | it is out, go make something |
 
-Several takes are read from twice — scene one uses the first part, a later scene
-picks up further in with `from:`. That is why some are longer than the scene
-that opens them. Shoot each as **one continuous take**; do not cut between the
-two halves.
+Several takes are read from twice — a later scene picks up further into the same
+file with `from:`. Shoot each as **one continuous take**; do not cut between the
+halves. SHOOT.md states the minimum length for each, computed from where the
+last scene reads to.
 
 ## And the reel
 
